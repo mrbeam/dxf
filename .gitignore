@@ -6,3 +6,5 @@ examples/example.svg
 .DS_Store
 *~
 #*
+/nbproject/private/
+.idea/
