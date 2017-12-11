@@ -1,6 +1,6 @@
 {
   "name": "dxf",
-  "version": "2.4.2",
+  "version": "2.4.2.1",
   "description": "DXF parser for node/browser",
   "main": "lib/index.js",
   "engines": {
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/bjnortier/dxf.git"
+    "url": "git://github.com/mrbeam/dxf.git"
   },
   "keywords": [
     "DXF",
@@ -22,9 +22,9 @@
   "author": "Ben Nortier <ben@bjnortier.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/bjnortier/dxf/issues"
+    "url": "https://github.com/mrbeam/dxf/issues"
   },
-  "homepage": "https://github.com/bjnortier/dxf",
+  "homepage": "https://github.com/mrbeam/dxf",
   "devDependencies": {
     "babel-core": "^6.5.2",
     "babel-loader": "^6.2.2",
