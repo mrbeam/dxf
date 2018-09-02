@@ -18,6 +18,17 @@ At this point in time, the important geometric entities are supported, but notab
 
 and some others are **parsed**, but are **not supported for SVG rendering** (see section below on SVG rendering)
 
+## Build
+
+1. prepare environment
+```$ npm i```
+
+2. compile
+```$ npm run compile```
+
+3. bundle
+```$ npm run dist```
+
 ## Getting started
 
 There is an ES5 and ES6 example in the ```examples/``` directory that show how to use the library, but there are 3 basic steps:
