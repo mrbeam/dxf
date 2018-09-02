@@ -1716,8 +1716,8 @@ var parseString = exports.parseString = function parseString(string) {
     header: {},
     blocks: [],
     entities: [],
-    tables: [] // modified by Mr Beam due https://github.com/mrbeam/MrBeamPlugin/issues/314
-  });
+    tables: { layers: {}, styles: {} // modified by Mr Beam due https://github.com/mrbeam/MrBeamPlugin/issues/314
+    } });
   return result;
 };
 
@@ -1825,7 +1825,7 @@ exports.default = function (parsed) {
   svgString += ' preserveAspectRatio="xMinYMin meet"';
 
   // MrBeam modification START
-  svgString += ' viewBox="' + [bbox.minX, 0, bbox.width, bbox.height].join(' ') + '"'; // maybe -bbox.maxY instead 0 - like in upstream ?
+  svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"'; // maybe -bbox.maxY instead 0 - like in upstream ?
   svgString += ' width="' + bbox.width + '" height="' + bbox.height + '">';
   svgString += '<!-- Created with dxf.js -->';
   svgString += paths.join('') + '</svg>';
