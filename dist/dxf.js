@@ -1825,7 +1825,7 @@ exports.default = function (parsed) {
   svgString += ' preserveAspectRatio="xMinYMin meet"';
 
   // MrBeam modification START
-  svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"'; // maybe -bbox.maxY instead 0 - like in upstream ?
+  svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"';
   svgString += ' width="' + bbox.width + '" height="' + bbox.height + '">';
   svgString += '<!-- Created with dxf.js -->';
   svgString += paths.join('') + '</svg>';
