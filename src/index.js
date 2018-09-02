@@ -94,7 +94,8 @@ export const parseString = (string) => {
     // In the event of empty sections
     header: {},
     blocks: [],
-    entities: []
+    entities: [],
+    tables: [] // modified by Mr Beam due https://github.com/mrbeam/MrBeamPlugin/issues/314
   })
   return result
 }
