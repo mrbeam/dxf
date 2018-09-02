@@ -31,4 +31,5 @@ describe('svg entities', function () {
   createTest('issue27c')
   createTest('issue28')
   createTest('issue29')
+  createTest('openscad_export')
 })

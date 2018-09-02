@@ -95,7 +95,7 @@ export const parseString = (string) => {
     header: {},
     blocks: [],
     entities: [],
-    tables: [] // modified by Mr Beam due https://github.com/mrbeam/MrBeamPlugin/issues/314
+    tables: {layers: {}, styles: {}} // modified by Mr Beam due https://github.com/mrbeam/MrBeamPlugin/issues/314
   })
   return result
 }
