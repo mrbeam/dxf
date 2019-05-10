@@ -155,13 +155,11 @@ export default (parsed) => {
     elements: []
   })
 
-
-
   // V3.2.3 MrBeam modification START
-  //svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"'
-  //svgString += ' width="' + bbox.width + '" height="' + bbox.height + '">'
-  //svgString += '<!-- Created with dxf.js -->'
-  //svgString += paths.join('') + '</svg>'
+  // svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"'
+  // svgString += ' width="' + bbox.width + '" height="' + bbox.height + '">'
+  // svgString += '<!-- Created with dxf.js -->'
+  // svgString += paths.join('') + '</svg>'
   // MrBeam modification END
 
   const viewBox = bbox.min.x === Infinity
@@ -189,5 +187,4 @@ export default (parsed) => {
     ${pd.xml(elements.join('\n'))}
   </g>
 </svg>`
-
 }
