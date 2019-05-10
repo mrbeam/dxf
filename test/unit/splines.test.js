@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { join } from 'path'
-import { assert } from 'chai'
+import expect from 'expect'
 
 import { parseString } from '../../src'
 const dxfContents = fs.readFileSync(join(__dirname, '/../resources/splines.dxf'), 'utf-8')
@@ -8,9 +8,9 @@ const dxfContents = fs.readFileSync(join(__dirname, '/../resources/splines.dxf')
 describe('SPLINE', () => {
   it('can be parsed', () => {
     const entities = parseString(dxfContents).entities
-    assert.deepEqual(entities.length, 2)
+    expect(entities.length).toEqual(2)
 
-    assert.deepEqual(entities[0], {
+    expect(entities[0]).toEqual({
       type: 'SPLINE',
       layer: '0',
       lineTypeName: 'ByLayer',
@@ -19,10 +19,10 @@ describe('SPLINE', () => {
       flag: 8,
       controlPointTolerance: 1e-7,
       controlPoints: [
-        {x: 10, y: 10, z: 0},
-        {x: 50, y: 10, z: 0},
-        {x: 80, y: 40, z: 0},
-        {x: 90, y: 20, z: 0}
+        { x: 10, y: 10, z: 0 },
+        { x: 50, y: 10, z: 0 },
+        { x: 80, y: 40, z: 0 },
+        { x: 90, y: 20, z: 0 }
       ],
       degree: 3,
       knotTolerance: 1e-7,
@@ -35,7 +35,7 @@ describe('SPLINE', () => {
       extrusionZ: 0
     })
 
-    assert.deepEqual(entities[1], {
+    expect(entities[1]).toEqual({
       type: 'SPLINE',
       layer: '0',
       lineTypeName: 'ByLayer',
@@ -44,14 +44,14 @@ describe('SPLINE', () => {
       flag: 8,
       controlPointTolerance: 1e-7,
       controlPoints: [
-        {x: 30, y: 30, z: 0},
-        {x: 30, y: 50, z: 0},
-        {x: 85, y: 55, z: 0},
-        {x: 90, y: 80, z: 0},
-        {x: 30, y: 50, z: 0},
-        {x: 20, y: 80, z: 0},
-        {x: 55, y: 100, z: 0},
-        {x: 90, y: 90, z: 0}
+        { x: 30, y: 30, z: 0 },
+        { x: 30, y: 50, z: 0 },
+        { x: 85, y: 55, z: 0 },
+        { x: 90, y: 80, z: 0 },
+        { x: 30, y: 50, z: 0 },
+        { x: 20, y: 80, z: 0 },
+        { x: 55, y: 100, z: 0 },
+        { x: 90, y: 90, z: 0 }
       ],
       degree: 3,
       knotTolerance: 1e-7,

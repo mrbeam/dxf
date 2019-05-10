@@ -1,14 +1,14 @@
 import fs from 'fs'
 import { join } from 'path'
-import { assert } from 'chai'
+import expect from 'expect'
 
 import { parseString } from '../../src'
 const dxfContents = fs.readFileSync(join(__dirname, '/../resources/lines.dxf'), 'utf-8')
 
-describe('header2', () => {
+describe('header', () => {
   it('can parse the header', () => {
     const parsed = parseString(dxfContents)
-    assert.deepEqual(parsed.header, {
+    expect(parsed.header).toEqual({
       'extMin': {
         'x': 0,
         'y': 0,

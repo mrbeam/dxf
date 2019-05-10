@@ -1,5 +1,4 @@
-import bSpline from 'b-spline'
-
+import bSpline from './util/bSpline'
 import logger from './util/logger'
 import createArcForLWPolyine from './util/createArcForLWPolyline'
 
@@ -106,43 +105,6 @@ const interpolateBSpline = (controlPoints, degree, knots, interpolationsPerSplin
       }
     }
   }
-  return polyline
-}
-
-/**
- * Apply the transforms to the polyline.
- *
- * @param polyline the polyline
- * @param transform the transforms array
- * @returns the transformed polyline
- */
-const applyTransforms = (polyline, transforms) => {
-  transforms.forEach(transform => {
-    polyline = polyline.map(function (p) {
-      // Use a copy to avoid side effects
-      let p2 = [p[0], p[1]]
-      if (transform.xScale) {
-        p2[0] = p2[0] * transform.xScale
-      }
-      if (transform.yScale) {
-        p2[1] = p2[1] * transform.yScale
-      }
-      if (transform.rotation) {
-        const angle = transform.rotation / 180 * Math.PI
-        p2 = [
-          p2[0] * Math.cos(angle) - p2[1] * Math.sin(angle),
-          p2[1] * Math.cos(angle) + p2[0] * Math.sin(angle)
-        ]
-      }
-      if (transform.x) {
-        p2[0] = p2[0] + transform.x
-      }
-      if (transform.y) {
-        p2[1] = p2[1] + transform.y
-      }
-      return p2
-    })
-  })
   return polyline
 }
 
@@ -258,5 +220,5 @@ export default (entity, options) => {
     logger.warn('unsupported entity for converting to polyline:', entity.type)
     return []
   }
-  return applyTransforms(polyline, entity.transforms)
+  return polyline
 }

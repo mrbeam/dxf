@@ -1,81 +1,193 @@
 import { pd } from 'pretty-data'
+import { Box2 } from 'vecks'
 
-import BoundingBox from './BoundingBox'
-import denormalise from './denormalise'
 import entityToPolyline from './entityToPolyline'
-import colors from './util/colors'
+import denormalise from './denormalise'
+import getRGBForEntity from './getRGBForEntity'
 import logger from './util/logger'
+import rotate from './util/rotate'
+import rgbToColorAttribute from './util/rgbToColorAttribute'
+import transformBoundingBoxAndElement from './transformBoundingBoxAndElement'
 
-const polylineToPath = (rgb, polyline) => {
-  const color24bit = rgb[2] | (rgb[1] << 8) | (rgb[0] << 16)
-  let prepad = color24bit.toString(16)
-  for (let i = 0, il = 6 - prepad.length; i < il; ++i) {
-    prepad = '0' + prepad
-  }
-  let hex = '#' + prepad
-
-  // SVG is white by default, so make white lines black
-  if (hex === '#ffffff') {
-    hex = '#000000'
-  }
-
-  const d = polyline.reduce(function (acc, point, i) {
+/**
+ * Create a <path /> element. Interpolates curved entities.
+ */
+const polyline = (entity) => {
+  const vertices = entityToPolyline(entity)
+  const bbox = vertices.reduce((acc, [x, y]) => acc.expandByPoint({ x, y }), new Box2())
+  const d = vertices.reduce((acc, point, i) => {
     acc += (i === 0) ? 'M' : 'L'
     acc += point[0] + ',' + point[1]
     return acc
   }, '')
-  return '<path fill="none" stroke="' + hex + '" stroke-width="0.1%" d="' + d + '"/>'
+  const element = `<path d="${d}" />`
+  return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
 /**
- * Convert the interpolate polylines to SVG
+ * Create a <circle /> element for the CIRCLE entity.
  */
+const circle = (entity) => {
+  const bbox = new Box2()
+    .expandByPoint({
+      x: entity.x + entity.r,
+      y: entity.y + entity.r
+    })
+    .expandByPoint({
+      x: entity.x - entity.r,
+      y: entity.y - entity.r
+    })
+  const element = `<circle cx="${entity.x}" cy="${entity.y}" r="${entity.r}" />`
+  return transformBoundingBoxAndElement(bbox, element, entity.transforms)
+}
+
+/**
+ * Create a a <path d="A..." /> or <ellipse /> element for the ARC or ELLIPSE
+ * DXF entity (<ellipse /> if start and end point are the same).
+ */
+const ellipseOrArc = (cx, cy, rx, ry, startAngle, endAngle, rotationAngle) => {
+  const bbox = [
+    { x: rx, y: ry },
+    { x: rx, y: ry },
+    { x: -rx, y: -ry },
+    { x: -rx, y: ry }
+  ].reduce((acc, p) => {
+    const rotated = rotate(p, rotationAngle)
+    acc.expandByPoint({
+      x: cx + rotated.x,
+      y: cy + rotated.y
+    })
+    return acc
+  }, new Box2())
+  if ((Math.abs(startAngle - endAngle) < 1e-9) || (Math.abs(startAngle - endAngle + Math.PI * 2) < 1e-9)) {
+    // Use a native <ellipse> when start and end angles are the same, and
+    // arc paths with same start and end points don't render (at least on Safari)
+    const element = `<g transform="rotate(${rotationAngle / Math.PI * 180} ${cx}, ${cy})">
+      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" />
+    </g>`
+    return { bbox, element }
+  } else {
+    const startOffset = rotate({
+      x: Math.cos(startAngle) * rx,
+      y: Math.sin(startAngle) * ry
+    }, rotationAngle)
+    const startPoint = {
+      x: cx + startOffset.x,
+      y: cy + startOffset.y
+    }
+    const endOffset = rotate({
+      x: Math.cos(endAngle) * rx,
+      y: Math.sin(endAngle) * ry
+    }, rotationAngle)
+    const endPoint = {
+      x: cx + endOffset.x,
+      y: cy + endOffset.y
+    }
+    const adjustedEndAngle = endAngle < startAngle
+      ? endAngle + Math.PI * 2
+      : endAngle
+    const largeArcFlag = adjustedEndAngle - startAngle < Math.PI ? 0 : 1
+    const d = `M ${startPoint.x} ${startPoint.y} A ${rx} ${ry} ${rotationAngle / Math.PI * 180} ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`
+    const element = `<path d="${d}" />`
+    return { bbox, element }
+  }
+}
+
+/**
+ * An ELLIPSE is defined by the major axis, convert to X and Y radius with
+ * a rotation angle
+ */
+const ellipse = (entity) => {
+  const rx = Math.sqrt(entity.majorX * entity.majorX + entity.majorY * entity.majorY)
+  const ry = entity.axisRatio * rx
+  const majorAxisRotation = -Math.atan2(-entity.majorY, entity.majorX)
+  const { bbox, element } = ellipseOrArc(entity.x, entity.y, rx, ry, entity.startAngle, entity.endAngle, majorAxisRotation)
+  return transformBoundingBoxAndElement(bbox, element, entity.transforms)
+}
+
+/**
+ * An ARC is an ellipse with equal radii
+ */
+const arc = (entity) => {
+  const { bbox, element } = ellipseOrArc(entity.x, entity.y, entity.r, entity.r, entity.startAngle, entity.endAngle, 0)
+  return transformBoundingBoxAndElement(bbox, element, entity.transforms)
+}
+
+/**
+ * Switcth the appropriate function on entity type. CIRCLE, ARC and ELLIPSE
+ * produce native SVG elements, the rest produce interpolated polylines.
+ */
+const entityToBoundsAndElement = (entity) => {
+  switch (entity.type) {
+    case 'CIRCLE':
+      return circle(entity)
+    case 'ELLIPSE':
+      return ellipse(entity)
+    case 'ARC':
+      return arc(entity)
+    case 'LINE':
+    case 'LWPOLYLINE':
+    case 'SPLINE':
+    case 'POLYLINE': {
+      return polyline(entity)
+    }
+    default:
+      logger.warn('entity type not supported in SVG rendering:', entity.type)
+      return null
+  }
+}
+
 export default (parsed) => {
   const entities = denormalise(parsed)
-  const polylines = entities.map(e => {
-    return entityToPolyline(e)
-  })
-
-  const bbox = new BoundingBox()
-  polylines.forEach(polyline => {
-    polyline.forEach(point => {
-      bbox.expandByPoint(point[0], point[1])
-    })
-  })
-
-  const paths = []
-  polylines.forEach((polyline, i) => {
-    const entity = entities[i]
-    const layerTable = parsed.tables.layers[entity.layer]
-    let rgb
-    if (layerTable) {
-      let colorNumber = ('colorNumber' in entity) ? entity.colorNumber : layerTable.colorNumber
-      rgb = colors[colorNumber]
-      if (rgb === undefined) {
-        logger.warn('Color index', colorNumber, 'invalid, defaulting to black')
-        rgb = [0, 0, 0]
-      }
-    } else {
-      logger.warn('no layer table for layer:' + entity.layer)
-      rgb = [0, 0, 0]
+  const { bbox, elements } = entities.reduce((acc, entity) => {
+    const rgb = getRGBForEntity(parsed.tables.layers, entity)
+    const boundsAndElement = entityToBoundsAndElement(entity)
+    // Ignore entities like MTEXT that don't produce SVG elements
+    if (boundsAndElement) {
+      const { bbox, element } = boundsAndElement
+      acc.bbox.expandByPoint(bbox.min)
+      acc.bbox.expandByPoint(bbox.max)
+      acc.elements.push(`<g stroke="${rgbToColorAttribute(rgb)}">${element}</g>`)
     }
-    const p2 = polyline.map(function (p) {
-      return [p[0], -p[1]]
-    })
-    paths.push(polylineToPath(rgb, p2))
+    return acc
+  }, {
+    bbox: new Box2(),
+    elements: []
   })
 
-  let svgString = '<?xml version="1.0"?>'
-  svgString += '<svg xmlns="http://www.w3.org/2000/svg"'
-  svgString += ' xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"'
-  svgString += ' preserveAspectRatio="xMinYMin meet"'
 
-  // MrBeam modification START
-  svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"'
-  svgString += ' width="' + bbox.width + '" height="' + bbox.height + '">'
-  svgString += '<!-- Created with dxf.js -->'
-  svgString += paths.join('') + '</svg>'
+
+  // V3.2.3 MrBeam modification START
+  //svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"'
+  //svgString += ' width="' + bbox.width + '" height="' + bbox.height + '">'
+  //svgString += '<!-- Created with dxf.js -->'
+  //svgString += paths.join('') + '</svg>'
   // MrBeam modification END
 
-  return pd.xml(svgString)
+  const viewBox = bbox.min.x === Infinity
+    ? {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    }
+    : {
+      x: bbox.min.x,
+      y: -bbox.max.y,
+      width: bbox.max.x - bbox.min.x,
+      height: bbox.max.y - bbox.min.y
+    }
+  return `<?xml version="1.0"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+  preserveAspectRatio="xMinYMin meet"
+  viewBox="${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}"
+  width="100%" height="100%"
+>
+  <g stroke="#000000" stroke-width="0.1%" fill="none" transform="matrix(1,0,0,-1,0,0)">
+    ${pd.xml(elements.join('\n'))}
+  </g>
+</svg>`
+
 }
