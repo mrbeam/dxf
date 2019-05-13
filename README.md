@@ -31,6 +31,8 @@ and some others are **parsed**, but are **not supported for SVG rendering** (see
 3. bundle
 ```$ npm run dist```
 
+(Mr Beam modification: npm run dist applies dist_dxf.js.patch to fix a bug in prettyprint which comes up when minifying the dist/dxf.js)
+
 ## Getting started
 
 There is an ES5 and ES6 example in the ```examples/``` directory that show how to use the library. There are exposed functions for advanced users, but for the majority of users you can use the `Helper` object to get the data you're interested in (or convert to SVG):

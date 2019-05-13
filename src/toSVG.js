@@ -20,7 +20,7 @@ const polyline = (entity) => {
     acc += point[0] + ',' + point[1]
     return acc
   }, '')
-  const element = `<path d="${d}" />`
+  const element = `<path d="${d}" fill="none" />`
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
@@ -37,7 +37,7 @@ const circle = (entity) => {
       x: entity.x - entity.r,
       y: entity.y - entity.r
     })
-  const element = `<circle cx="${entity.x}" cy="${entity.y}" r="${entity.r}" />`
+  const element = `<circle cx="${entity.x}" cy="${entity.y}" r="${entity.r}" fill="none" />`
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
@@ -63,7 +63,7 @@ const ellipseOrArc = (cx, cy, rx, ry, startAngle, endAngle, rotationAngle) => {
     // Use a native <ellipse> when start and end angles are the same, and
     // arc paths with same start and end points don't render (at least on Safari)
     const element = `<g transform="rotate(${rotationAngle / Math.PI * 180} ${cx}, ${cy})">
-      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" />
+      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" />
     </g>`
     return { bbox, element }
   } else {
@@ -88,7 +88,7 @@ const ellipseOrArc = (cx, cy, rx, ry, startAngle, endAngle, rotationAngle) => {
       : endAngle
     const largeArcFlag = adjustedEndAngle - startAngle < Math.PI ? 0 : 1
     const d = `M ${startPoint.x} ${startPoint.y} A ${rx} ${ry} ${rotationAngle / Math.PI * 180} ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`
-    const element = `<path d="${d}" />`
+    const element = `<path d="${d}" fill="none" />`
     return { bbox, element }
   }
 }

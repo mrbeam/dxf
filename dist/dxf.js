@@ -2147,7 +2147,7 @@ var polyline = function polyline(entity) {
     acc += point[0] + ',' + point[1];
     return acc;
   }, '');
-  var element = "<path d=\"".concat(d, "\" />");
+  var element = "<path d=\"".concat(d, "\" fill=\"none\" />");
   return (0, _transformBoundingBoxAndElement.default)(bbox, element, entity.transforms);
 };
 /**
@@ -2163,7 +2163,7 @@ var circle = function circle(entity) {
     x: entity.x - entity.r,
     y: entity.y - entity.r
   });
-  var element = "<circle cx=\"".concat(entity.x, "\" cy=\"").concat(entity.y, "\" r=\"").concat(entity.r, "\" />");
+  var element = "<circle cx=\"".concat(entity.x, "\" cy=\"").concat(entity.y, "\" r=\"").concat(entity.r, "\" fill=\"none\" />");
   return (0, _transformBoundingBoxAndElement.default)(bbox, element, entity.transforms);
 };
 /**
@@ -2197,7 +2197,7 @@ var ellipseOrArc = function ellipseOrArc(cx, cy, rx, ry, startAngle, endAngle, r
   if (Math.abs(startAngle - endAngle) < 1e-9 || Math.abs(startAngle - endAngle + Math.PI * 2) < 1e-9) {
     // Use a native <ellipse> when start and end angles are the same, and
     // arc paths with same start and end points don't render (at least on Safari)
-    var element = "<g transform=\"rotate(".concat(rotationAngle / Math.PI * 180, " ").concat(cx, ", ").concat(cy, ")\">\n      <ellipse cx=\"").concat(cx, "\" cy=\"").concat(cy, "\" rx=\"").concat(rx, "\" ry=\"").concat(ry, "\" />\n    </g>");
+    var element = "<g transform=\"rotate(".concat(rotationAngle / Math.PI * 180, " ").concat(cx, ", ").concat(cy, ")\">\n      <ellipse cx=\"").concat(cx, "\" cy=\"").concat(cy, "\" rx=\"").concat(rx, "\" ry=\"").concat(ry, "\" fill=\"none\" />\n    </g>");
     return {
       bbox: bbox,
       element: element
@@ -2223,7 +2223,7 @@ var ellipseOrArc = function ellipseOrArc(cx, cy, rx, ry, startAngle, endAngle, r
     var largeArcFlag = adjustedEndAngle - startAngle < Math.PI ? 0 : 1;
     var d = "M ".concat(startPoint.x, " ").concat(startPoint.y, " A ").concat(rx, " ").concat(ry, " ").concat(rotationAngle / Math.PI * 180, " ").concat(largeArcFlag, " 1 ").concat(endPoint.x, " ").concat(endPoint.y);
 
-    var _element = "<path d=\"".concat(d, "\" />");
+    var _element = "<path d=\"".concat(d, "\" fill=\"none\" />");
 
     return {
       bbox: bbox,
