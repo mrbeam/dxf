@@ -1,0 +1,17 @@
+diff --git a/dist/dxf.js b/dist/dxf.js
+index d6e00fc..27e4dcc 100644
+--- a/dist/dxf.js
++++ b/dist/dxf.js
+@@ -4524,9 +4524,9 @@ module.exports = cloneDeep;
+ 
+ function pp() {
+ 	this.shift = ['\n']; // array of shifts
+-	this.step = '  ', // 2 spaces
+-		maxdeep = 100, // nesting level
+-		ix = 0;
++	this.step = '  '; // 2 spaces
++	var maxdeep = 100; // nesting level
++	var ix = 0;
+ 
+ 	// initialize array with shifts //
+ 	for(ix=0;ix<maxdeep;ix++){
