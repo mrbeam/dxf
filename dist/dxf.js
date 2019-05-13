@@ -2332,7 +2332,7 @@ var _default = function _default(parsed) {
     width: bbox.max.x - bbox.min.x,
     height: bbox.max.y - bbox.min.y
   };
-  return "<?xml version=\"1.0\"?>\n<svg\n  xmlns=\"http://www.w3.org/2000/svg\"\n  xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\"\n  preserveAspectRatio=\"xMinYMin meet\"\n  viewBox=\"".concat(viewBox.x, " ").concat(viewBox.y, " ").concat(viewBox.width, " ").concat(viewBox.height, "\"\n  width=\"100%\" height=\"100%\"\n>\n  <g stroke=\"#000000\" stroke-width=\"0.1%\" fill=\"none\" transform=\"matrix(1,0,0,-1,0,0)\">\n    ").concat(_prettyData.pd.xml(elements.join('\n')), "\n  </g>\n</svg>");
+  return "<?xml version=\"1.0\"?>\n<svg\n  xmlns=\"http://www.w3.org/2000/svg\"\n  xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\"\n  preserveAspectRatio=\"xMinYMin meet\"\n  viewBox=\"".concat(viewBox.x, " ").concat(viewBox.y, " ").concat(viewBox.width, " ").concat(viewBox.height, "\"\n  width=\"100%\" height=\"100%\"\n><!-- Created with mrbeam/dxf.js -->\n  <g class=\"dxf-import\">\n    ").concat(_prettyData.pd.xml(elements.join('\n')), "\n  </g>\n</svg>");
 };
 
 exports.default = _default;
