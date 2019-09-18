@@ -72,7 +72,7 @@ const interpolateEllipse = (cx, cy, rx, ry, start, end, rotationAngle) => {
  * @param knots the knot vector
  * @returns the polyline
  */
-const interpolateBSpline = (controlPoints, degree, knots, interpolationsPerSplineSegment) => {
+export const interpolateBSpline = (controlPoints, degree, knots, interpolationsPerSplineSegment) => {
   const polyline = []
   const controlPointsForLib = controlPoints.map(function (p) {
     return [p.x, p.y]
@@ -92,17 +92,10 @@ const interpolateBSpline = (controlPoints, degree, knots, interpolationsPerSplin
     const uMin = segmentTs[i - 1]
     const uMax = segmentTs[i]
     for (let k = 0; k <= interpolationsPerSplineSegment; ++k) {
-      // https://github.com/bjnortier/dxf/issues/28
-      // b-spline interpolation can fail due to a floating point
-      // error - ignore these until the lib is fixed
-      try {
-        const u = k / interpolationsPerSplineSegment * (uMax - uMin) + uMin
-        const t = (u - domain[0]) / (domain[1] - domain[0])
-        const p = bSpline(t, degree, controlPointsForLib, knots)
-        polyline.push(p)
-      } catch (e) {
-        // ignore this point
-      }
+      const u = k / interpolationsPerSplineSegment * (uMax - uMin) + uMin
+      const t = (u - domain[0]) / (domain[1] - domain[0])
+      const p = bSpline(t, degree, controlPointsForLib, knots)
+      polyline.push(p)
     }
   }
   return polyline
@@ -161,6 +154,11 @@ export default (entity, options) => {
       entity.x, entity.y,
       entity.r, entity.r,
       0, Math.PI * 2)
+    if (entity.extrusionZ === -1) {
+      polyline = polyline.map(function (p) {
+        return [-p[0], p[1]]
+      })
+    }
   }
 
   if (entity.type === 'ELLIPSE') {
@@ -173,13 +171,9 @@ export default (entity, options) => {
       entity.startAngle,
       entity.endAngle,
       majorAxisRotation)
-    const flipY = entity.extrusionZ === -1
-    if (flipY) {
+    if (entity.extrusionZ === -1) {
       polyline = polyline.map(function (p) {
-        return [
-          -(p[0] - entity.x) + entity.x,
-          p[1]
-        ]
+        return [-p[0], p[1]]
       })
     }
   }
@@ -197,13 +191,9 @@ export default (entity, options) => {
 
     // I kid you not, ARCs and ELLIPSEs handle this differently,
     // as evidenced by how AutoCAD actually renders these entities
-    const flipY = entity.extrusionZ === -1
-    if (flipY) {
+    if (entity.extrusionZ === -1) {
       polyline = polyline.map(function (p) {
-        return [
-          -p[0],
-          p[1]
-        ]
+        return [-p[0], p[1]]
       })
     }
   }

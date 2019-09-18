@@ -1,6 +1,6 @@
 {
   "name": "dxf",
-  "version": "4.1.0",
+  "version": "4.2.2",
   "description": "DXF parser for node/browser",
   "main": "lib/index.js",
   "bin": {
@@ -35,12 +35,12 @@
   },
   "homepage": "https://github.com/mrbeam/dxf",
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.4.0",
-    "@babel/node": "^7.2.2",
-    "@babel/preset-env": "^7.4.2",
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/node": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
     "@babel/preset-react": "^7.0.0",
-    "@babel/register": "^7.0.0",
+    "@babel/register": "^7.5.5",
     "babel-loader": "^8.0.5",
     "browserify": "^16.2.3",
     "expect": "^24.6.0",
@@ -61,7 +61,7 @@
     "acorn": "^6.1.1",
     "chai": "^4.2.0",
     "commander": "^2.17.1",
-    "lodash.clonedeep": "^4.5.0",
+    "lodash": "^4.17.14",
     "pretty-data": "^0.40.0",
     "round10": "^1.0.3",
     "vecks": "^3.7.2"
