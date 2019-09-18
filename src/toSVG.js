@@ -9,7 +9,6 @@ import rotate from './util/rotate'
 import rgbToColorAttribute from './util/rgbToColorAttribute'
 import toPiecewiseBezier from './util/toPiecewiseBezier'
 import transformBoundingBoxAndElement from './transformBoundingBoxAndElement'
-import transformVertices from './transformVertices'
 
 const addFlipXIfApplicable = (entity, { bbox, element }) => {
   if (entity.extrusionZ === -1) {
@@ -41,32 +40,6 @@ const polyline = (entity) => {
   let element = `<path d="${d}" fill="none" />`
   // Empirically it appears that flipping horzontally does not apply to polyline
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
-}
-
-/**
- * Create the 'd' attribute of a <path /> element. Interpolates curved entities.
- * Ignores entity.transforms
- */
-const pathdata = (entity) => {
-		//	entity = { type: 'LINE',
-		//    start: { x: 100, y: 10 },
-		//    end: { x: 100, y: 20 },
-		//    layer: '0',
-		//    lineTypeName: 'ByLayer',
-		//    colorNumber: 256,
-		//    transforms: [] },
-  let vertices = entityToPolyline(entity)
-  vertices = transformVertices(vertices, entity.transforms)
-  const bbox = vertices.reduce((acc, [x, y]) => acc.expandByPoint({ x, y }), new Box2())
-  const d = vertices.reduce((acc, point, i) => {
-    acc += (i === 0) ? 'M' : 'L'
-    acc += point[0] + ',' + point[1]
-    return acc
-  }, '')
-  const start = vertices[0]
-  const end = vertices[vertices.length - 1]
-  
-  return { bbox: bbox, pathdata: d, pathStart: {x: start[0], y: start[1]}, pathEnd:  {x: end[0], y: end[1]}}
 }
 
 /**
@@ -228,103 +201,23 @@ const entityToBoundsAndElement = (entity) => {
   }
 }
 
-/**
- * Switcth the appropriate function on entity type. CIRCLE, ARC and ELLIPSE
- * produce native SVG elements, the rest produce interpolated polylines.
- */
-const entityToBoundsAndPathAttr = (entity) => {
-  switch (entity.type) {
-    case 'CIRCLE':
-    case 'ELLIPSE':
-    case 'ARC':
-    case 'SPLINE': 
-    case 'LINE':
-    case 'LWPOLYLINE':
-    case 'POLYLINE': {
-	  return pathdata(entity)
-    }
-    default:
-      logger.warn('entity type not supported in SVG rendering:', entity.type)
-      return null
-  }
-}
-
 export default (parsed) => {
   let entities = denormalise(parsed)
-//  const { bbox, elements } = entities.reduce((acc, entity, i) => {
-//    const rgb = getRGBForEntity(parsed.tables.layers, entity)
-//    const boundsAndElement = entityToBoundsAndElement(entity)
-//    // Ignore entities like MTEXT that don't produce SVG elements
-//    if (boundsAndElement) {
-//      const { bbox, element } = boundsAndElement
-//      acc.bbox.expandByPoint(bbox.min)
-//      acc.bbox.expandByPoint(bbox.max)
-//      acc.elements.push(`<g stroke="${rgbToColorAttribute(rgb)}">${element}</g>`)
-//    }
-//    return acc
-//  }, {
-//    bbox: new Box2(),
-//    elements: []
-//  })
-  
-  const strip_moveto_regex = /^M[^MmLlHhVvCcSsQqTtAaZz]+/
-  let lastColor = [null, null, null]
-  let lastEnd = null
-  let d_attr = ""
-  const { bbox, elements } = entities.reduce((acc, entity, i, orig_array) => {
+  const { bbox, elements } = entities.reduce((acc, entity, i) => {
     const rgb = getRGBForEntity(parsed.tables.layers, entity)
-    const boundsAndPathAttr = entityToBoundsAndPathAttr(entity)
+    const boundsAndElement = entityToBoundsAndElement(entity)
     // Ignore entities like MTEXT that don't produce SVG elements
-    if (boundsAndPathAttr) {
-	
-		const { bbox, pathdata, pathStart, pathEnd } = boundsAndPathAttr
-		acc.bbox.expandByPoint(bbox.min)
-		acc.bbox.expandByPoint(bbox.max)
-	
-
-		//	{ type: 'LINE',
-		//    start: { x: 100, y: 10 },
-		//    end: { x: 100, y: 20 },
-		//    layer: '0',
-		//    lineTypeName: 'ByLayer',
-		//    colorNumber: 256,
-		//    transforms: [] },
-
-		if (rgb[0] === lastColor[0]
-			&& rgb[1] === lastColor[1]
-			&& rgb[2] === lastColor[2]){
-		
-			if( pathStart.x === lastEnd.x 
-				&& pathStart.y === lastEnd.y) {
-				const stripped = pathdata.replace(strip_moveto_regex, '')
-				d_attr += stripped
-			} else {
-				d_attr += pathdata
-			}
-			
-		} else {
-			if(d_attr.length > 0){
-				acc.elements.push(`<path d="${d_attr}" stroke="${rgbToColorAttribute(rgb)}"/>`)
-			}
-			d_attr = pathdata
-		}
-	
-		// remember
-		lastColor = rgb
-		lastEnd = {x: pathEnd.x, y: pathEnd.y}
+    if (boundsAndElement) {
+      const { bbox, element } = boundsAndElement
+      acc.bbox.expandByPoint(bbox.min)
+      acc.bbox.expandByPoint(bbox.max)
+      acc.elements.push(`<g stroke="${rgbToColorAttribute(rgb)}">${element}</g>`)
     }
-	
-	
     return acc
-  }, { // initialization of acc
+  }, {
     bbox: new Box2(),
     elements: []
   })
-  
-  if(d_attr.length > 0){
-	elements.push(`<path d="${d_attr}" stroke="${rgbToColorAttribute(lastColor)}"/>`)
-  }
-	  
 
   // V3.2.3 MrBeam modification START
   // svgString += ' viewBox="' + [bbox.minX, -bbox.maxY, bbox.width, bbox.height].join(' ') + '"'

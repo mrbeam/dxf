@@ -14,6 +14,8 @@ var _denormalise2 = _interopRequireDefault(require("./denormalise"));
 
 var _toSVG2 = _interopRequireDefault(require("./toSVG"));
 
+var _toSVGPaths2 = _interopRequireDefault(require("./toSVGPaths"));
+
 var _toPolylines2 = _interopRequireDefault(require("./toPolylines"));
 
 var _groupEntitiesByLayer = _interopRequireDefault(require("./groupEntitiesByLayer"));
@@ -70,6 +72,11 @@ function () {
       return (0, _toSVG2["default"])(this.parsed);
     }
   }, {
+    key: "toSVGPaths",
+    value: function toSVGPaths() {
+      return (0, _toSVGPaths2["default"])(this.parsed);
+    }
+  }, {
     key: "toPolylines",
     value: function toPolylines() {
       return (0, _toPolylines2["default"])(this.parsed);
@@ -107,7 +114,7 @@ function () {
 }();
 
 exports["default"] = Helper;
-},{"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":26,"./toPolylines":27,"./toSVG":28,"./util/logger":34}],2:[function(require,module,exports){
+},{"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":26,"./toPolylines":27,"./toSVG":28,"./toSVGPaths":29,"./util/logger":36}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -244,7 +251,7 @@ var _default = function _default(parseResult) {
 };
 
 exports["default"] = _default;
-},{"./util/logger":34,"lodash":38}],5:[function(require,module,exports){
+},{"./util/logger":36,"lodash":40}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -447,7 +454,7 @@ var _default = function _default(entity, options) {
 };
 
 exports["default"] = _default;
-},{"./util/bSpline":30,"./util/createArcForLWPolyline":32,"./util/logger":34}],6:[function(require,module,exports){
+},{"./util/bSpline":32,"./util/createArcForLWPolyline":34,"./util/logger":36}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -483,7 +490,7 @@ var _default = function _default(layers, entity) {
 };
 
 exports["default"] = _default;
-},{"./util/colors":31,"./util/logger":34}],7:[function(require,module,exports){
+},{"./util/colors":33,"./util/logger":36}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -666,7 +673,7 @@ var _default = function _default(tuples) {
 };
 
 exports["default"] = _default;
-},{"../util/logger":34,"./entity/arc":10,"./entity/circle":11,"./entity/ellipse":13,"./entity/insert":14,"./entity/line":15,"./entity/lwpolyline":16,"./entity/mtext":17,"./entity/point":18,"./entity/polyline":19,"./entity/solid":20,"./entity/spline":21,"./entity/vertex":22}],10:[function(require,module,exports){
+},{"../util/logger":36,"./entity/arc":10,"./entity/circle":11,"./entity/ellipse":13,"./entity/insert":14,"./entity/line":15,"./entity/lwpolyline":16,"./entity/mtext":17,"./entity/point":18,"./entity/polyline":19,"./entity/solid":20,"./entity/spline":21,"./entity/vertex":22}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1821,7 +1828,7 @@ var _default = function _default(tuples) {
 };
 
 exports["default"] = _default;
-},{"../util/logger":34}],25:[function(require,module,exports){
+},{"../util/logger":36}],25:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1863,6 +1870,12 @@ Object.defineProperty(exports, "toSVG", {
     return _toSVG["default"];
   }
 });
+Object.defineProperty(exports, "toSVGPaths", {
+  enumerable: true,
+  get: function get() {
+    return _toSVGPaths["default"];
+  }
+});
 Object.defineProperty(exports, "colors", {
   enumerable: true,
   get: function get() {
@@ -1888,12 +1901,14 @@ var _toPolylines = _interopRequireDefault(require("./toPolylines"));
 
 var _toSVG = _interopRequireDefault(require("./toSVG"));
 
+var _toSVGPaths = _interopRequireDefault(require("./toSVGPaths"));
+
 var _colors = _interopRequireDefault(require("./util/colors"));
 
 var _Helper = _interopRequireDefault(require("./Helper"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-},{"./Helper":1,"./config":3,"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":26,"./toPolylines":27,"./toSVG":28,"./util/colors":31}],26:[function(require,module,exports){
+},{"./Helper":1,"./config":3,"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":26,"./toPolylines":27,"./toSVG":28,"./toSVGPaths":29,"./util/colors":33}],26:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2090,7 +2105,7 @@ var _default = function _default(parsed) {
 };
 
 exports["default"] = _default;
-},{"./applyTransforms":2,"./denormalise":4,"./entityToPolyline":5,"./util/colors":31,"./util/logger":34,"vecks":49}],28:[function(require,module,exports){
+},{"./applyTransforms":2,"./denormalise":4,"./entityToPolyline":5,"./util/colors":33,"./util/logger":36,"vecks":51}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2429,7 +2444,177 @@ var _default = function _default(parsed) {
 };
 
 exports["default"] = _default;
-},{"./denormalise":4,"./entityToPolyline":5,"./getRGBForEntity":6,"./transformBoundingBoxAndElement":29,"./util/logger":34,"./util/rgbToColorAttribute":35,"./util/rotate":36,"./util/toPiecewiseBezier":37,"pretty-data":39,"vecks":49}],29:[function(require,module,exports){
+},{"./denormalise":4,"./entityToPolyline":5,"./getRGBForEntity":6,"./transformBoundingBoxAndElement":30,"./util/logger":36,"./util/rgbToColorAttribute":37,"./util/rotate":38,"./util/toPiecewiseBezier":39,"pretty-data":41,"vecks":51}],29:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = void 0;
+
+var _prettyData = require("pretty-data");
+
+var _vecks = require("vecks");
+
+var _entityToPolyline = _interopRequireDefault(require("./entityToPolyline"));
+
+var _denormalise = _interopRequireDefault(require("./denormalise"));
+
+var _getRGBForEntity = _interopRequireDefault(require("./getRGBForEntity"));
+
+var _logger = _interopRequireDefault(require("./util/logger"));
+
+var _rgbToColorAttribute = _interopRequireDefault(require("./util/rgbToColorAttribute"));
+
+var _transformVertices = _interopRequireDefault(require("./transformVertices"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+/**
+ * Create the 'd' attribute of a <path /> element. Interpolates curved entities.
+ * @entity object, example: { type: 'LINE',
+ *       start: { x: 100, y: 10 },
+ *       end: { x: 100, y: 20 },
+ *       layer: '0',
+ *       lineTypeName: 'ByLayer',
+ *       colorNumber: 256,
+ *       transforms: [] }
+ */
+var pathdata = function pathdata(entity) {
+  var vertices = (0, _entityToPolyline["default"])(entity);
+  vertices = (0, _transformVertices["default"])(vertices, entity.transforms); //  const bbox = vertices.reduce((acc, [x, y], i) => acc.expandByPoint({ x, y }), new Box2()) // throws exception on some files???
+
+  var bbox = new _vecks.Box2();
+  vertices.forEach(function (point) {
+    bbox.expandByPoint({
+      x: point[0],
+      y: point[0]
+    });
+  });
+  var d = vertices.reduce(function (acc, point, i) {
+    acc += i === 0 ? 'M' : 'L';
+    acc += point[0] + ',' + point[1];
+    return acc;
+  }, '');
+  var start = vertices[0];
+  var end = vertices[vertices.length - 1];
+  return {
+    bbox: bbox,
+    pathdata: d,
+    pathStart: {
+      x: start[0],
+      y: start[1]
+    },
+    pathEnd: {
+      x: end[0],
+      y: end[1]
+    }
+  };
+};
+/**
+ * Switcth the appropriate function on entity type. All elements will be interpolated polylines.
+ */
+
+
+var entityToBoundsAndPathAttr = function entityToBoundsAndPathAttr(entity) {
+  switch (entity.type) {
+    case 'CIRCLE':
+    case 'ELLIPSE':
+    case 'ARC':
+    case 'SPLINE':
+    case 'LINE':
+    case 'LWPOLYLINE':
+    case 'POLYLINE':
+      {
+        return pathdata(entity);
+      }
+
+    default:
+      _logger["default"].warn('entity type not supported in SVG rendering:', entity.type);
+
+      return null;
+  }
+};
+
+var _default = function _default(parsed) {
+  var entities = (0, _denormalise["default"])(parsed);
+  var stripMovetoRegex = /^M[^MmLlHhVvCcSsQqTtAaZz]+/;
+  var lastColor = [null, null, null];
+  var lastEnd = null;
+  var dAttr = '';
+
+  var _entities$reduce = entities.reduce(function (acc, entity, i, origArray) {
+    var rgb = (0, _getRGBForEntity["default"])(parsed.tables.layers, entity);
+    var boundsAndPathAttr = entityToBoundsAndPathAttr(entity); // Ignore entities like MTEXT that don't produce SVG elements
+
+    if (boundsAndPathAttr) {
+      var _bbox = boundsAndPathAttr.bbox,
+          _pathdata = boundsAndPathAttr.pathdata,
+          pathStart = boundsAndPathAttr.pathStart,
+          pathEnd = boundsAndPathAttr.pathEnd;
+      acc.bbox.expandByPoint(_bbox.min);
+      acc.bbox.expandByPoint(_bbox.max); // { type: 'LINE',
+      //    start: { x: 100, y: 10 },
+      //    end: { x: 100, y: 20 },
+      //    layer: '0',
+      //    lineTypeName: 'ByLayer',
+      //    colorNumber: 256,
+      //    transforms: [] },
+
+      if (rgb[0] === lastColor[0] && rgb[1] === lastColor[1] && rgb[2] === lastColor[2]) {
+        if (pathStart.x === lastEnd.x && pathStart.y === lastEnd.y) {
+          var stripped = _pathdata.replace(stripMovetoRegex, '');
+
+          dAttr += stripped;
+        } else {
+          dAttr += _pathdata;
+        }
+      } else {
+        if (dAttr.length > 0) {
+          acc.elements.push("<path d=\"".concat(dAttr, "\" stroke=\"").concat((0, _rgbToColorAttribute["default"])(lastColor), "\" fill=\"none\" />"));
+        }
+
+        dAttr = _pathdata;
+      } // remember
+
+
+      lastColor = rgb;
+      lastEnd = {
+        x: pathEnd.x,
+        y: pathEnd.y
+      };
+    }
+
+    return acc;
+  }, {
+    // initialization of acc
+    bbox: new _vecks.Box2(),
+    elements: []
+  }),
+      bbox = _entities$reduce.bbox,
+      elements = _entities$reduce.elements;
+
+  if (dAttr.length > 0) {
+    elements.push("<path d=\"".concat(dAttr, "\" stroke=\"").concat((0, _rgbToColorAttribute["default"])(lastColor), "\" fill=\"none\" />"));
+  } // Mr Beam Modification: "add created" with comment
+
+
+  var viewBox = bbox.min.x === Infinity ? {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0
+  } : {
+    x: bbox.min.x,
+    y: -bbox.max.y,
+    width: bbox.max.x - bbox.min.x,
+    height: bbox.max.y - bbox.min.y
+  };
+  return "<?xml version=\"1.0\"?>\n<svg\n  xmlns=\"http://www.w3.org/2000/svg\"\n  xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\"\n  preserveAspectRatio=\"xMinYMin meet\"\n  viewBox='".concat(viewBox.x, " ").concat(viewBox.y, " ").concat(viewBox.width, " ").concat(viewBox.height, "'\n  width=\"100%\" height=\"100%\"\n><!-- Created with mrbeam/dxf.js -->\n  <g class=\"dxf-import\" transform=\"matrix(1 0 0 -1 0 ").concat(viewBox.height, ")\">\n    ").concat(_prettyData.pd.xml(elements.join('\n')), "\n  </g>\n</svg>");
+};
+
+exports["default"] = _default;
+},{"./denormalise":4,"./entityToPolyline":5,"./getRGBForEntity":6,"./transformVertices":31,"./util/logger":36,"./util/rgbToColorAttribute":37,"pretty-data":41,"vecks":51}],30:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2538,7 +2723,76 @@ var _default = function _default(bbox, element, transforms) {
 };
 
 exports["default"] = _default;
-},{"vecks":49}],30:[function(require,module,exports){
+},{"vecks":51}],31:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = void 0;
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+// import { Box2 } from 'vecks'
+
+/**
+ * Transform an array of vertices by the given
+ * transforms.
+ */
+var _default = function _default(vertices, transforms) {
+  var matrices = transforms.map(function (transform) {
+    // Create the transformation matrix
+    var tx = transform.x || 0;
+    var ty = transform.y || 0;
+    var sx = transform.scaleX || 1;
+    var sy = transform.scaleY || 1;
+    var angle = (transform.rotation || 0) / 180 * Math.PI;
+    var cos = Math.cos,
+        sin = Math.sin;
+    var a, b, c, d, e, f; // In DXF an extrusionZ value of -1 denote a tranform around the Y axis.
+
+    if (transform.extrusionZ === -1) {
+      a = -sx * cos(angle);
+      b = sx * sin(angle);
+      c = sy * sin(angle);
+      d = sy * cos(angle);
+      e = -tx;
+      f = ty;
+    } else {
+      a = sx * cos(angle);
+      b = sx * sin(angle);
+      c = -sy * sin(angle);
+      d = sy * cos(angle);
+      e = tx;
+      f = ty;
+    }
+
+    return [a, b, c, d, e, f];
+  });
+  matrices.forEach(function (_ref) {
+    var _ref2 = _slicedToArray(_ref, 6),
+        a = _ref2[0],
+        b = _ref2[1],
+        c = _ref2[2],
+        d = _ref2[3],
+        e = _ref2[4],
+        f = _ref2[5];
+
+    vertices = vertices.map(function (point) {
+      return [point[0] * a + point[1] * c + e, point[0] * b + point[1] * d + f];
+    });
+  });
+  return vertices;
+};
+
+exports["default"] = _default;
+},{}],32:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2643,7 +2897,7 @@ var _default = function _default(t, degree, points, knots, weights) {
 };
 
 exports["default"] = _default;
-},{"round10":40}],31:[function(require,module,exports){
+},{"round10":42}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2652,7 +2906,7 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = void 0;
 var _default = [[0, 0, 0], [255, 0, 0], [255, 255, 0], [0, 255, 0], [0, 255, 255], [0, 0, 255], [255, 0, 255], [255, 255, 255], [65, 65, 65], [128, 128, 128], [255, 0, 0], [255, 170, 170], [189, 0, 0], [189, 126, 126], [129, 0, 0], [129, 86, 86], [104, 0, 0], [104, 69, 69], [79, 0, 0], [79, 53, 53], [255, 63, 0], [255, 191, 170], [189, 46, 0], [189, 141, 126], [129, 31, 0], [129, 96, 86], [104, 25, 0], [104, 78, 69], [79, 19, 0], [79, 59, 53], [255, 127, 0], [255, 212, 170], [189, 94, 0], [189, 157, 126], [129, 64, 0], [129, 107, 86], [104, 52, 0], [104, 86, 69], [79, 39, 0], [79, 66, 53], [255, 191, 0], [255, 234, 170], [189, 141, 0], [189, 173, 126], [129, 96, 0], [129, 118, 86], [104, 78, 0], [104, 95, 69], [79, 59, 0], [79, 73, 53], [255, 255, 0], [255, 255, 170], [189, 189, 0], [189, 189, 126], [129, 129, 0], [129, 129, 86], [104, 104, 0], [104, 104, 69], [79, 79, 0], [79, 79, 53], [191, 255, 0], [234, 255, 170], [141, 189, 0], [173, 189, 126], [96, 129, 0], [118, 129, 86], [78, 104, 0], [95, 104, 69], [59, 79, 0], [73, 79, 53], [127, 255, 0], [212, 255, 170], [94, 189, 0], [157, 189, 126], [64, 129, 0], [107, 129, 86], [52, 104, 0], [86, 104, 69], [39, 79, 0], [66, 79, 53], [63, 255, 0], [191, 255, 170], [46, 189, 0], [141, 189, 126], [31, 129, 0], [96, 129, 86], [25, 104, 0], [78, 104, 69], [19, 79, 0], [59, 79, 53], [0, 255, 0], [170, 255, 170], [0, 189, 0], [126, 189, 126], [0, 129, 0], [86, 129, 86], [0, 104, 0], [69, 104, 69], [0, 79, 0], [53, 79, 53], [0, 255, 63], [170, 255, 191], [0, 189, 46], [126, 189, 141], [0, 129, 31], [86, 129, 96], [0, 104, 25], [69, 104, 78], [0, 79, 19], [53, 79, 59], [0, 255, 127], [170, 255, 212], [0, 189, 94], [126, 189, 157], [0, 129, 64], [86, 129, 107], [0, 104, 52], [69, 104, 86], [0, 79, 39], [53, 79, 66], [0, 255, 191], [170, 255, 234], [0, 189, 141], [126, 189, 173], [0, 129, 96], [86, 129, 118], [0, 104, 78], [69, 104, 95], [0, 79, 59], [53, 79, 73], [0, 255, 255], [170, 255, 255], [0, 189, 189], [126, 189, 189], [0, 129, 129], [86, 129, 129], [0, 104, 104], [69, 104, 104], [0, 79, 79], [53, 79, 79], [0, 191, 255], [170, 234, 255], [0, 141, 189], [126, 173, 189], [0, 96, 129], [86, 118, 129], [0, 78, 104], [69, 95, 104], [0, 59, 79], [53, 73, 79], [0, 127, 255], [170, 212, 255], [0, 94, 189], [126, 157, 189], [0, 64, 129], [86, 107, 129], [0, 52, 104], [69, 86, 104], [0, 39, 79], [53, 66, 79], [0, 63, 255], [170, 191, 255], [0, 46, 189], [126, 141, 189], [0, 31, 129], [86, 96, 129], [0, 25, 104], [69, 78, 104], [0, 19, 79], [53, 59, 79], [0, 0, 255], [170, 170, 255], [0, 0, 189], [126, 126, 189], [0, 0, 129], [86, 86, 129], [0, 0, 104], [69, 69, 104], [0, 0, 79], [53, 53, 79], [63, 0, 255], [191, 170, 255], [46, 0, 189], [141, 126, 189], [31, 0, 129], [96, 86, 129], [25, 0, 104], [78, 69, 104], [19, 0, 79], [59, 53, 79], [127, 0, 255], [212, 170, 255], [94, 0, 189], [157, 126, 189], [64, 0, 129], [107, 86, 129], [52, 0, 104], [86, 69, 104], [39, 0, 79], [66, 53, 79], [191, 0, 255], [234, 170, 255], [141, 0, 189], [173, 126, 189], [96, 0, 129], [118, 86, 129], [78, 0, 104], [95, 69, 104], [59, 0, 79], [73, 53, 79], [255, 0, 255], [255, 170, 255], [189, 0, 189], [189, 126, 189], [129, 0, 129], [129, 86, 129], [104, 0, 104], [104, 69, 104], [79, 0, 79], [79, 53, 79], [255, 0, 191], [255, 170, 234], [189, 0, 141], [189, 126, 173], [129, 0, 96], [129, 86, 118], [104, 0, 78], [104, 69, 95], [79, 0, 59], [79, 53, 73], [255, 0, 127], [255, 170, 212], [189, 0, 94], [189, 126, 157], [129, 0, 64], [129, 86, 107], [104, 0, 52], [104, 69, 86], [79, 0, 39], [79, 53, 66], [255, 0, 63], [255, 170, 191], [189, 0, 46], [189, 126, 141], [129, 0, 31], [129, 86, 96], [104, 0, 25], [104, 69, 78], [79, 0, 19], [79, 53, 59], [51, 51, 51], [80, 80, 80], [105, 105, 105], [130, 130, 130], [190, 190, 190], [255, 255, 255]];
 exports["default"] = _default;
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2738,7 +2992,7 @@ var _default = function _default(from, to, bulge, resolution) {
 };
 
 exports["default"] = _default;
-},{"vecks":49}],33:[function(require,module,exports){
+},{"vecks":51}],35:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2818,7 +3072,7 @@ var _default = function _default(k, controlPoints, knots, newKnot) {
 };
 
 exports["default"] = _default;
-},{}],34:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2852,7 +3106,7 @@ var _default = {
   error: error
 };
 exports["default"] = _default;
-},{"../config":3}],35:[function(require,module,exports){
+},{"../config":3}],37:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2873,7 +3127,7 @@ var _default = function _default(rgb) {
 };
 
 exports["default"] = _default;
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2895,7 +3149,7 @@ var _default = function _default(p, angle) {
 };
 
 exports["default"] = _default;
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2984,7 +3238,7 @@ var _default = function _default(k, controlPoints, knots) {
 };
 
 exports["default"] = _default;
-},{"./insertKnot":33}],38:[function(require,module,exports){
+},{"./insertKnot":35}],40:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -20100,7 +20354,7 @@ exports["default"] = _default;
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
 * pretty-data - nodejs plugin to pretty-print or minify data in XML, JSON and CSS formats.
 *  
@@ -20446,7 +20700,7 @@ exports.pd= new pp;
 
 
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * Decimal adjustment of a number.
  *
@@ -20501,7 +20755,7 @@ module.exports.polyfill = function() {
     }
 };
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20558,7 +20812,7 @@ Box2.fromPoints = function (points) {
 };
 
 exports.default = Box2;
-},{"./V2":47}],42:[function(require,module,exports){
+},{"./V2":49}],44:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -20625,7 +20879,7 @@ Box3.fromPoints = function (points) {
 };
 
 exports.default = Box3;
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20746,7 +21000,7 @@ var Line2 = function () {
 }();
 
 exports.default = Line2;
-},{"./V2":47}],44:[function(require,module,exports){
+},{"./V2":49}],46:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20801,7 +21055,7 @@ var Line3 = function () {
 }();
 
 exports.default = Line3;
-},{"./V3":48}],45:[function(require,module,exports){
+},{"./V3":50}],47:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20885,7 +21139,7 @@ Plane3.fromPoints = function (points) {
 };
 
 exports.default = Plane3;
-},{}],46:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20950,7 +21204,7 @@ Quaternion.fromAxisAngle = function (axis, angle) {
 };
 
 exports.default = Quaternion;
-},{"./V3":48}],47:[function(require,module,exports){
+},{"./V3":50}],49:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21022,7 +21276,7 @@ var V2 = function () {
 }();
 
 exports.default = V2;
-},{}],48:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21108,7 +21362,7 @@ var V3 = function () {
 }();
 
 exports.default = V3;
-},{}],49:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21158,5 +21412,5 @@ exports.Plane3 = _Plane2.default;
 exports.Quaternion = _Quaternion2.default;
 exports.Line2 = _Line2.default;
 exports.Line3 = _Line4.default;
-},{"./Box2":41,"./Box3":42,"./Line2":43,"./Line3":44,"./Plane3":45,"./Quaternion":46,"./V2":47,"./V3":48}]},{},[25])(25)
+},{"./Box2":43,"./Box3":44,"./Line2":45,"./Line3":46,"./Plane3":47,"./Quaternion":48,"./V2":49,"./V3":50}]},{},[25])(25)
 });

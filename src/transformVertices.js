@@ -1,8 +1,8 @@
-import { Box2 } from 'vecks'
+// import { Box2 } from 'vecks'
 
 /**
  * Transform an array of vertices by the given
- * transforms. 
+ * transforms.
  */
 export default (vertices, transforms) => {
   const matrices = transforms.map(transform => {
@@ -34,11 +34,11 @@ export default (vertices, transforms) => {
   })
 
   matrices.forEach(([a, b, c, d, e, f]) => {
-    vertices = vertices.map(point => ({
-      x: point.x * a + point.y * c + e,
-      y: point.x * b + point.y * d + f
-    }))
+    vertices = vertices.map(point => ([
+      point[0] * a + point[1] * c + e,
+      point[0] * b + point[1] * d + f
+    ]))
   })
 
-  return vertices 
+  return vertices
 }

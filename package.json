@@ -11,7 +11,8 @@
   },
   "scripts": {
     "lint": "standard",
-    "test:mrbeam": "mocha --require @babel/register test/unit/joined_paths.test.js",
+    "lintfix": "standard --fix",
+    "test:mrbeam": "mocha --require @babel/register test/unit/toSVGPaths.test.js",
     "test:unit": "mocha --require @babel/register --recursive test/unit/**",
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:functional": "cd test/functional && webpack-dev-server",
