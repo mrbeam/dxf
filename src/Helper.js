@@ -2,6 +2,7 @@ import logger from './util/logger'
 import parseString from './parseString'
 import denormalise from './denormalise'
 import toSVG from './toSVG'
+import toSVGPaths from './toSVGPaths'
 import toPolylines from './toPolylines'
 import groupEntitiesByLayer from './groupEntitiesByLayer'
 
@@ -54,6 +55,10 @@ export default class Helper {
 
   toSVG () {
     return toSVG(this.parsed)
+  }
+
+  toSVGPaths () {
+    return toSVGPaths(this.parsed)
   }
 
   toPolylines () {

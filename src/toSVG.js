@@ -36,8 +36,10 @@ const polyline = (entity) => {
     acc += point[0] + ',' + point[1]
     return acc
   }, '')
+  // fill="none" avoids svg default fill value: black
+  let element = `<path d="${d}" fill="none" />`
   // Empirically it appears that flipping horzontally does not apply to polyline
-  return transformBoundingBoxAndElement(bbox, `<path d="${d}" fill="none" />`, entity.transforms)
+  return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
 /**
@@ -53,7 +55,8 @@ const circle = (entity) => {
       x: entity.x - entity.r,
       y: entity.y - entity.r
     })
-  let element0 = `<circle cx="${entity.x}" cy="${entity.y}" r="${entity.r}" fill="none" />`
+  // fill="none" avoids svg default fill value: black
+  let element0 = `<circle cx="${entity.x}" cy="${entity.y}" r="${entity.r}" fill="none"  />`
   let { bbox, element } = addFlipXIfApplicable(entity, { bbox: bbox0, element: element0 })
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
