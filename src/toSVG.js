@@ -7,8 +7,8 @@ import getRGBForEntity from './getRGBForEntity'
 import logger from './util/logger'
 import rotate from './util/rotate'
 import rgbToColorAttribute from './util/rgbToColorAttribute'
-import toPiecewiseBezier from './util/toPiecewiseBezier'
-import transformBoundingBoxAndElement from './transformBoundingBoxAndElement'
+import toPiecewiseBezier, { multiplicity } from './util/toPiecewiseBezier'
+import transformBoundingBoxAndElement from './util/transformBoundingBoxAndElement'
 
 const addFlipXIfApplicable = (entity, { bbox, element }) => {
   if (entity.extrusionZ === -1) {
@@ -37,7 +37,7 @@ const polyline = (entity) => {
     return acc
   }, '')
   // fill="none" avoids svg default fill value: black
-  let element = `<path d="${d}" fill="none" />`
+  const element = `<path d="${d}" fill="none" />`
   // Empirically it appears that flipping horzontally does not apply to polyline
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
@@ -46,7 +46,7 @@ const polyline = (entity) => {
  * Create a <circle /> element for the CIRCLE entity.
  */
 const circle = (entity) => {
-  let bbox0 = new Box2()
+  const bbox0 = new Box2()
     .expandByPoint({
       x: entity.x + entity.r,
       y: entity.y + entity.r
@@ -56,8 +56,8 @@ const circle = (entity) => {
       y: entity.y - entity.r
     })
   // fill="none" avoids svg default fill value: black
-  let element0 = `<circle cx="${entity.x}" cy="${entity.y}" r="${entity.r}" fill="none"  />`
-  let { bbox, element } = addFlipXIfApplicable(entity, { bbox: bbox0, element: element0 })
+  const element0 = `<circle cx="${entity.x}" cy="${entity.y}" r="${entity.r}" fill="none"/>`
+  const { bbox, element } = addFlipXIfApplicable(entity, { bbox: bbox0, element: element0 })
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
@@ -65,20 +65,13 @@ const circle = (entity) => {
  * Create a a <path d="A..." /> or <ellipse /> element for the ARC or ELLIPSE
  * DXF entity (<ellipse /> if start and end point are the same).
  */
-const ellipseOrArc = (cx, cy, rx, ry, startAngle, endAngle, rotationAngle, flipX) => {
-  const bbox = [
-    { x: rx, y: ry },
-    { x: rx, y: ry },
-    { x: -rx, y: -ry },
-    { x: -rx, y: ry }
-  ].reduce((acc, p) => {
-    const rotated = rotate(p, rotationAngle)
-    acc.expandByPoint({
-      x: cx + rotated.x,
-      y: cy + rotated.y
-    })
-    return acc
-  }, new Box2())
+const ellipseOrArc = (cx, cy, majorX, majorY, axisRatio, startAngle, endAngle, flipX) => {
+  const rx = Math.sqrt(majorX * majorX + majorY * majorY)
+  const ry = axisRatio * rx
+  const rotationAngle = -Math.atan2(-majorY, majorX)
+
+  const bbox = bboxEllipseOrArc(cx, cy, majorX, majorY, axisRatio, startAngle, endAngle, flipX)
+
   if ((Math.abs(startAngle - endAngle) < 1e-9) || (Math.abs(startAngle - endAngle + Math.PI * 2) < 1e-9)) {
     // Use a native <ellipse> when start and end angles are the same, and
     // arc paths with same start and end points don't render (at least on Safari)
@@ -114,15 +107,79 @@ const ellipseOrArc = (cx, cy, rx, ry, startAngle, endAngle, rotationAngle, flipX
 }
 
 /**
+ * Compute the bounding box of an elliptical arc, given the DXF entity parameters
+ */
+const bboxEllipseOrArc = (cx, cy, majorX, majorY, axisRatio, startAngle, endAngle, flipX) => {
+  // The bounding box will be defined by the starting point of the ellipse, and ending point,
+  // and any extrema on the ellipse that are between startAngle and endAngle.
+  // The extrema are found by setting either the x or y component of the ellipse's
+  // tangent vector to zero and solving for the angle.
+
+  // Ensure start and end angles are > 0 and well-ordered
+  while (startAngle < 0) startAngle += Math.PI * 2
+  while (endAngle <= startAngle) endAngle += Math.PI * 2
+
+  // When rotated, the extrema of the ellipse will be found at these angles
+  const angles = []
+
+  if (Math.abs(majorX) < 1e-12 || Math.abs(majorY) < 1e-12) {
+    // Special case for majorX or majorY = 0
+    for (let i = 0; i < 4; i++) {
+      angles.push(i / 2 * Math.PI)
+    }
+  } else {
+    // reference https://github.com/bjnortier/dxf/issues/47#issuecomment-545915042
+    angles[0] = Math.atan(-majorY * axisRatio / majorX) - Math.PI // Ensure angles < 0
+    angles[1] = Math.atan(majorX * axisRatio / majorY) - Math.PI
+    angles[2] = angles[0] - Math.PI
+    angles[3] = angles[1] - Math.PI
+  }
+
+  // Remove angles not falling between start and end
+  for (let i = 4; i >= 0; i--) {
+    while (angles[i] < startAngle) angles[i] += Math.PI * 2
+    if (angles[i] > endAngle) {
+      angles.splice(i, 1)
+    }
+  }
+
+  // Also to consider are the starting and ending points:
+  angles.push(startAngle)
+  angles.push(endAngle)
+
+  // Compute points lying on the unit circle at these angles
+  const pts = angles.map(a => ({
+    x: Math.cos(a),
+    y: Math.sin(a)
+  }))
+
+  // Transformation matrix, formed by the major and minor axes
+  const M =
+    [[majorX, -majorY * axisRatio],
+      [majorY, majorX * axisRatio]]
+
+  // Rotate, scale, and translate points
+  const rotatedPts = pts.map(p => ({
+    x: p.x * M[0][0] + p.y * M[0][1] + cx,
+    y: p.x * M[1][0] + p.y * M[1][1] + cy
+  }))
+
+  // Compute extents of bounding box
+  const bbox = rotatedPts.reduce((acc, p) => {
+    acc.expandByPoint(p)
+    return acc
+  }, new Box2())
+
+  return bbox
+}
+
+/**
  * An ELLIPSE is defined by the major axis, convert to X and Y radius with
  * a rotation angle
  */
 const ellipse = (entity) => {
-  const rx = Math.sqrt(entity.majorX * entity.majorX + entity.majorY * entity.majorY)
-  const ry = entity.axisRatio * rx
-  const majorAxisRotation = -Math.atan2(-entity.majorY, entity.majorX)
-  let { bbox: bbox0, element: element0 } = ellipseOrArc(entity.x, entity.y, rx, ry, entity.startAngle, entity.endAngle, majorAxisRotation)
-  let { bbox, element } = addFlipXIfApplicable(entity, { bbox: bbox0, element: element0 })
+  const { bbox: bbox0, element: element0 } = ellipseOrArc(entity.x, entity.y, entity.majorX, entity.majorY, entity.axisRatio, entity.startAngle, entity.endAngle)
+  const { bbox, element } = addFlipXIfApplicable(entity, { bbox: bbox0, element: element0 })
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
@@ -130,26 +187,30 @@ const ellipse = (entity) => {
  * An ARC is an ellipse with equal radii
  */
 const arc = (entity) => {
-  let { bbox: bbox0, element: element0 } = ellipseOrArc(
+  const { bbox: bbox0, element: element0 } = ellipseOrArc(
     entity.x, entity.y,
-    entity.r, entity.r,
+    entity.r, 0,
+    1,
     entity.startAngle, entity.endAngle,
-    0,
     entity.extrusionZ === -1)
-  let { bbox, element } = addFlipXIfApplicable(entity, { bbox: bbox0, element: element0 })
+  const { bbox, element } = addFlipXIfApplicable(entity, { bbox: bbox0, element: element0 })
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
-export const piecewiseToPaths = (k, controlPoints) => {
-  const nSegments = (controlPoints.length - 1) / (k - 1)
+export const piecewiseToPaths = (k, knots, controlPoints) => {
   const paths = []
-  for (let i = 0; i < nSegments; ++i) {
-    const cp = controlPoints.slice(i * (k - 1))
+  let controlPointIndex = 0
+  let knotIndex = k
+  while (knotIndex < knots.length - k + 1) {
+    const m = multiplicity(knots, knotIndex)
+    const cp = controlPoints.slice(controlPointIndex, controlPointIndex + k)
     if (k === 4) {
       paths.push(`<path d="M ${cp[0].x} ${cp[0].y} C ${cp[1].x} ${cp[1].y} ${cp[2].x} ${cp[2].y} ${cp[3].x} ${cp[3].y}" fill="none" />`)
     } else if (k === 3) {
       paths.push(`<path d="M ${cp[0].x} ${cp[0].y} Q ${cp[1].x} ${cp[1].y} ${cp[2].x} ${cp[2].y}" fill="none" />`)
     }
+    controlPointIndex += m
+    knotIndex += m
   }
   return paths
 }
@@ -161,8 +222,8 @@ const bezier = (entity) => {
   })
   const k = entity.degree + 1
   const piecewise = toPiecewiseBezier(k, entity.controlPoints, entity.knots)
-  const paths = piecewiseToPaths(k, piecewise.controlPoints)
-  let element = `<g>${paths.join('')}</g>`
+  const paths = piecewiseToPaths(k, piecewise.knots, piecewise.controlPoints)
+  const element = `<g>${paths.join('')}</g>`
   return transformBoundingBoxAndElement(bbox, element, entity.transforms)
 }
 
@@ -201,15 +262,18 @@ const entityToBoundsAndElement = (entity) => {
 }
 
 export default (parsed) => {
-  let entities = denormalise(parsed)
+  const entities = denormalise(parsed)
   const { bbox, elements } = entities.reduce((acc, entity, i) => {
     const rgb = getRGBForEntity(parsed.tables.layers, entity)
     const boundsAndElement = entityToBoundsAndElement(entity)
     // Ignore entities like MTEXT that don't produce SVG elements
     if (boundsAndElement) {
       const { bbox, element } = boundsAndElement
-      acc.bbox.expandByPoint(bbox.min)
-      acc.bbox.expandByPoint(bbox.max)
+      // Ignore invalid bounding boxes
+      if (bbox.valid) {
+        acc.bbox.expandByPoint(bbox.min)
+        acc.bbox.expandByPoint(bbox.max)
+      }
       acc.elements.push(`<g stroke="${rgbToColorAttribute(rgb)}">${element}</g>`)
     }
     return acc
@@ -218,18 +282,18 @@ export default (parsed) => {
     elements: []
   })
 
-  const viewBox = bbox.min.x === Infinity
+  const viewBox = bbox.valid
     ? {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    }
-    : {
       x: bbox.min.x,
       y: -bbox.max.y,
       width: bbox.max.x - bbox.min.x,
       height: bbox.max.y - bbox.min.y
+    }
+    : {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
     }
   return `<?xml version="1.0"?>
 <svg

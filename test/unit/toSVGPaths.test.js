@@ -71,7 +71,7 @@ for (var i = 0; i < names.length; i++) {
     //    console.log(svg)
 
     it('can be converted to svgPaths', () => {
-      let matches = svg.match(/<path d.+?\/>/g) || []
+      const matches = svg.match(/<path d.+?\/>/g) || []
       expect(matches.length).toEqual(expectations[name].pathCount)
     })
     it('can be converted without undefined values', () => {
@@ -79,13 +79,13 @@ for (var i = 0; i < names.length; i++) {
     })
 
     it('has correct viewBox', () => {
-      let viewbox = svg.match(/viewBox='.+?'/g)
+      const viewbox = svg.match(/viewBox='.+?'/g)
       expect(viewbox.length).toEqual(1)
       expect(viewbox[0]).toEqual(expectations[name].viewbox)
     })
 
     it('has correct colors', () => {
-      let matches = svg.match(/stroke=".+?"/g) || []
+      const matches = svg.match(/stroke=".+?"/g) || []
       let colors = []
       colors = matches.filter(function (value, index, self) {
         return self.indexOf(value) === index

@@ -22,7 +22,7 @@ const pathdata = (entity) => {
   let vertices = entityToPolyline(entity)
   vertices = transformVertices(vertices, entity.transforms)
   //  const bbox = vertices.reduce((acc, [x, y], i) => acc.expandByPoint({ x, y }), new Box2()) // throws exception on some files???
-  let bbox = new Box2()
+  const bbox = new Box2()
   vertices.forEach(function (point) {
     bbox.expandByPoint({ x: point[0], y: point[0] })
   })
@@ -58,7 +58,7 @@ const entityToBoundsAndPathAttr = (entity) => {
 }
 
 export default (parsed) => {
-  let entities = denormalise(parsed)
+  const entities = denormalise(parsed)
   const stripMovetoRegex = /^M[^MmLlHhVvCcSsQqTtAaZz]+/
 
   let lastColor = [null, null, null]
@@ -101,7 +101,7 @@ export default (parsed) => {
     }
 
     return acc
-  }, {// initialization of acc
+  }, { // initialization of acc
     bbox: new Box2(),
     elements: []
   })
@@ -111,18 +111,17 @@ export default (parsed) => {
   }
 
   // Mr Beam Modification: "add created" with comment
-  const viewBox = bbox.min.x === Infinity
+  const viewBox = bbox.valid
     ? {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    }
-    : {
       x: bbox.min.x,
       y: -bbox.max.y,
       width: bbox.max.x - bbox.min.x,
       height: bbox.max.y - bbox.min.y
+    } : {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
     }
   return `<?xml version="1.0"?>
 <svg
