@@ -28,9 +28,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var Helper =
-/*#__PURE__*/
-function () {
+var Helper = /*#__PURE__*/function () {
   function Helper(contents) {
     _classCallCheck(this, Helper);
 
@@ -114,7 +112,7 @@ function () {
 }();
 
 exports["default"] = Helper;
-},{"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":26,"./toPolylines":27,"./toSVG":28,"./toSVGPaths":29,"./util/logger":35}],2:[function(require,module,exports){
+},{"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":27,"./toPolylines":28,"./toSVG":29,"./toSVGPaths":30,"./util/logger":36}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -194,6 +192,8 @@ var _logger = _interopRequireDefault(require("./util/logger"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 var _default = function _default(parseResult) {
   var blocksByName = parseResult.blocks.reduce(function (acc, b) {
     acc[b.name] = b;
@@ -204,80 +204,124 @@ var _default = function _default(parseResult) {
     var current = [];
     entities.forEach(function (e) {
       if (e.type === 'INSERT') {
-        var insert = e;
-        var block = blocksByName[insert.block];
+        var _ret = function () {
+          var _insert$rowCount, _insert$columnCount, _insert$rowSpacing, _insert$columnSpacing, _insert$rotation;
 
-        if (!block) {
-          _logger["default"].error('no block found for insert. block:', insert.block);
+          var insert = e;
+          var block = blocksByName[insert.block];
 
-          return;
-        }
+          if (!block) {
+            _logger["default"].error('no block found for insert. block:', insert.block);
 
-        var t = {
-          x: insert.x,
-          y: insert.y,
-          scaleX: insert.scaleX,
-          scaleY: insert.scaleY,
-          scaleZ: insert.scaleZ,
-          extrusionX: insert.extrusionX,
-          extrusionY: insert.extrusionY,
-          extrusionZ: insert.extrusionZ,
-          rotation: insert.rotation // Add the insert transform and recursively add entities
-
-        };
-        var transforms2 = transforms.slice(0);
-        transforms2.push(t); // Use the insert layer
-
-        var blockEntities = block.entities.map(function (be) {
-          var be2 = (0, _lodash.cloneDeep)(be);
-          be2.layer = insert.layer; // https://github.com/bjnortier/dxf/issues/52
-          // See Issue 52. If we don't modify the
-          // entity coordinates here it creates an issue with the
-          // transformation matrices (which are only applied AFTER
-          // block insertion modifications has been applied).
-
-          switch (be2.type) {
-            case 'LINE':
-              {
-                be2.start.x -= block.x;
-                be2.start.y -= block.y;
-                be2.end.x -= block.x;
-                be2.end.y -= block.y;
-                break;
-              }
-
-            case 'LWPOLYLINE':
-            case 'POLYLINE':
-              {
-                be2.vertices.forEach(function (v) {
-                  v.x -= block.x;
-                  v.y -= block.y;
-                });
-                break;
-              }
-
-            case 'CIRCLE':
-            case 'ELLIPSE':
-            case 'ARC':
-              {
-                be2.x -= block.x;
-                be2.y -= block.y;
-                break;
-              }
-
-            case 'SPLINE':
-              {
-                be2.controlPoints.forEach(function (cp) {
-                  cp.x -= block.x;
-                  cp.y -= block.y;
-                });
-                break;
-              }
+            return {
+              v: void 0
+            };
           }
 
-          return be2;
-        });
-        current = current.concat(gatherEntities(blockEntities, transforms2));
+          var rowCount = (_insert$rowCount = insert.rowCount) !== null && _insert$rowCount !== void 0 ? _insert$rowCount : 1;
+          var columnCount = (_insert$columnCount = insert.columnCount) !== null && _insert$columnCount !== void 0 ? _insert$columnCount : 1;
+          var rowSpacing = (_insert$rowSpacing = insert.rowSpacing) !== null && _insert$rowSpacing !== void 0 ? _insert$rowSpacing : 0;
+          var columnSpacing = (_insert$columnSpacing = insert.columnSpacing) !== null && _insert$columnSpacing !== void 0 ? _insert$columnSpacing : 0;
+          var rotation = (_insert$rotation = insert.rotation) !== null && _insert$rotation !== void 0 ? _insert$rotation : 0; // It appears that the rectangular array is affected by rotation, but NOT by scale.
+
+          var rowVec, colVec;
+
+          if (rowCount > 1 || columnCount > 1) {
+            var cos = Math.cos(rotation * Math.PI / 180);
+            var sin = Math.sin(rotation * Math.PI / 180);
+            rowVec = {
+              x: -sin * rowSpacing,
+              y: cos * rowSpacing
+            };
+            colVec = {
+              x: cos * columnSpacing,
+              y: sin * columnSpacing
+            };
+          } else {
+            rowVec = {
+              x: 0,
+              y: 0
+            };
+            colVec = {
+              x: 0,
+              y: 0
+            };
+          } // For rectangular arrays, add the block entities for each location in the array
+
+
+          for (var r = 0; r < rowCount; r++) {
+            for (var c = 0; c < columnCount; c++) {
+              // Adjust insert transform by row and column for rectangular arrays
+              var t = {
+                x: insert.x + rowVec.x * r + colVec.x * c,
+                y: insert.y + rowVec.y * r + colVec.y * c,
+                scaleX: insert.scaleX,
+                scaleY: insert.scaleY,
+                scaleZ: insert.scaleZ,
+                extrusionX: insert.extrusionX,
+                extrusionY: insert.extrusionY,
+                extrusionZ: insert.extrusionZ,
+                rotation: insert.rotation
+              }; // Add the insert transform and recursively add entities
+
+              var transforms2 = transforms.slice(0);
+              transforms2.push(t); // Use the insert layer
+
+              var blockEntities = block.entities.map(function (be) {
+                var be2 = (0, _lodash.cloneDeep)(be);
+                be2.layer = insert.layer; // https://github.com/bjnortier/dxf/issues/52
+                // See Issue 52. If we don't modify the
+                // entity coordinates here it creates an issue with the
+                // transformation matrices (which are only applied AFTER
+                // block insertion modifications has been applied).
+
+                switch (be2.type) {
+                  case 'LINE':
+                    {
+                      be2.start.x -= block.x;
+                      be2.start.y -= block.y;
+                      be2.end.x -= block.x;
+                      be2.end.y -= block.y;
+                      break;
+                    }
+
+                  case 'LWPOLYLINE':
+                  case 'POLYLINE':
+                    {
+                      be2.vertices.forEach(function (v) {
+                        v.x -= block.x;
+                        v.y -= block.y;
+                      });
+                      break;
+                    }
+
+                  case 'CIRCLE':
+                  case 'ELLIPSE':
+                  case 'ARC':
+                    {
+                      be2.x -= block.x;
+                      be2.y -= block.y;
+                      break;
+                    }
+
+                  case 'SPLINE':
+                    {
+                      be2.controlPoints.forEach(function (cp) {
+                        cp.x -= block.x;
+                        cp.y -= block.y;
+                      });
+                      break;
+                    }
+                }
+
+                return be2;
+              });
+              current = current.concat(gatherEntities(blockEntities, transforms2));
+            }
+          }
+        }();
+
+        if (_typeof(_ret) === "object") return _ret.v;
       } else {
         // Top-level entity. Clone and add the transforms
         // The transforms are reversed so they occur in
@@ -295,7 +339,7 @@ var _default = function _default(parseResult) {
 };
 
 exports["default"] = _default;
-},{"./util/logger":35,"lodash":40}],5:[function(require,module,exports){
+},{"./util/logger":36,"lodash":41}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -394,8 +438,11 @@ var interpolateBSpline = function interpolateBSpline(controlPoints, degree, knot
     var uMax = segmentTs[i];
 
     for (var _k = 0; _k <= interpolationsPerSplineSegment; ++_k) {
-      var u = _k / interpolationsPerSplineSegment * (uMax - uMin) + uMin;
+      var u = _k / interpolationsPerSplineSegment * (uMax - uMin) + uMin; // Clamp t to 0, 1 to handle numerical precision issues
+
       var t = (u - domain[0]) / (domain[1] - domain[0]);
+      t = Math.max(t, 0);
+      t = Math.min(t, 1);
       var p = (0, _bSpline["default"])(t, degree, controlPointsForLib, knots);
       polyline.push(p);
     }
@@ -498,7 +545,7 @@ var _default = function _default(entity, options) {
 };
 
 exports["default"] = _default;
-},{"./util/bSpline":31,"./util/createArcForLWPolyline":33,"./util/logger":35}],6:[function(require,module,exports){
+},{"./util/bSpline":32,"./util/createArcForLWPolyline":34,"./util/logger":36}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -534,7 +581,7 @@ var _default = function _default(layers, entity) {
 };
 
 exports["default"] = _default;
-},{"./util/colors":32,"./util/logger":35}],7:[function(require,module,exports){
+},{"./util/colors":33,"./util/logger":36}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -661,9 +708,11 @@ var _mtext = _interopRequireDefault(require("./entity/mtext"));
 
 var _insert = _interopRequireDefault(require("./entity/insert"));
 
+var _threeDFace = _interopRequireDefault(require("./entity/threeDFace"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var handlers = [_point["default"], _line["default"], _lwpolyline["default"], _polyline["default"], _vertex["default"], _circle["default"], _arc["default"], _ellipse["default"], _spline["default"], _solid["default"], _mtext["default"], _insert["default"]].reduce(function (acc, mod) {
+var handlers = [_point["default"], _line["default"], _lwpolyline["default"], _polyline["default"], _vertex["default"], _circle["default"], _arc["default"], _ellipse["default"], _spline["default"], _solid["default"], _mtext["default"], _insert["default"], _threeDFace["default"]].reduce(function (acc, mod) {
   acc[mod.TYPE] = mod;
   return acc;
 }, {});
@@ -717,7 +766,7 @@ var _default = function _default(tuples) {
 };
 
 exports["default"] = _default;
-},{"../util/logger":35,"./entity/arc":10,"./entity/circle":11,"./entity/ellipse":13,"./entity/insert":14,"./entity/line":15,"./entity/lwpolyline":16,"./entity/mtext":17,"./entity/point":18,"./entity/polyline":19,"./entity/solid":20,"./entity/spline":21,"./entity/vertex":22}],10:[function(require,module,exports){
+},{"../util/logger":36,"./entity/arc":10,"./entity/circle":11,"./entity/ellipse":13,"./entity/insert":14,"./entity/line":15,"./entity/lwpolyline":16,"./entity/mtext":17,"./entity/point":18,"./entity/polyline":19,"./entity/solid":20,"./entity/spline":21,"./entity/threeDFace":22,"./entity/vertex":23}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1603,6 +1652,93 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports["default"] = exports.process = exports.TYPE = void 0;
+
+var _common = _interopRequireDefault(require("./common"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+var TYPE = '3DFACE';
+exports.TYPE = TYPE;
+
+var process = function process(tuples) {
+  return tuples.reduce(function (entity, tuple) {
+    var type = tuple[0];
+    var value = tuple[1];
+
+    switch (type) {
+      case 10:
+        entity.vertices[0].x = value;
+        break;
+
+      case 20:
+        entity.vertices[0].y = value;
+        break;
+
+      case 30:
+        entity.vertices[0].z = value;
+        break;
+
+      case 11:
+        entity.vertices[1].x = value;
+        break;
+
+      case 21:
+        entity.vertices[1].y = value;
+        break;
+
+      case 31:
+        entity.vertices[1].z = value;
+        break;
+
+      case 12:
+        entity.vertices[2].x = value;
+        break;
+
+      case 22:
+        entity.vertices[2].y = value;
+        break;
+
+      case 32:
+        entity.vertices[2].z = value;
+        break;
+
+      case 13:
+        entity.vertices[3].x = value;
+        break;
+
+      case 23:
+        entity.vertices[3].y = value;
+        break;
+
+      case 33:
+        entity.vertices[3].z = value;
+        break;
+
+      default:
+        Object.assign(entity, (0, _common["default"])(type, value));
+        break;
+    }
+
+    return entity;
+  }, {
+    type: TYPE,
+    vertices: [{}, {}, {}, {}]
+  });
+};
+
+exports.process = process;
+var _default = {
+  TYPE: TYPE,
+  process: process
+};
+exports["default"] = _default;
+},{"./common":12}],23:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = exports.process = exports.TYPE = void 0;
 var TYPE = 'VERTEX';
 exports.TYPE = TYPE;
 
@@ -1642,7 +1778,7 @@ var _default = {
   process: process
 };
 exports["default"] = _default;
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1658,49 +1794,65 @@ var _default = function _default(tuples) {
     var value = tuple[1];
 
     switch (value) {
+      case '$MEASUREMENT':
+        {
+          state = 'measurement';
+          break;
+        }
+
+      case '$INSUNITS':
+        {
+          state = 'insUnits';
+          break;
+        }
+
       case '$EXTMIN':
         header.extMin = {};
         state = 'extMin';
-        return;
+        break;
 
       case '$EXTMAX':
         header.extMax = {};
         state = 'extMax';
-        return;
+        break;
 
       default:
-        if (state === 'extMin') {
-          switch (type) {
-            case 10:
-              header.extMin.x = value;
-              break;
+        switch (state) {
+          case 'extMin':
+          case 'extMax':
+            {
+              switch (type) {
+                case 10:
+                  header[state].x = value;
+                  break;
 
-            case 20:
-              header.extMin.y = value;
-              break;
+                case 20:
+                  header[state].y = value;
+                  break;
 
-            case 30:
-              header.extMin.z = value;
-              state = undefined;
-              break;
-          }
-        }
+                case 30:
+                  header[state].z = value;
+                  state = undefined;
+                  break;
+              }
 
-        if (state === 'extMax') {
-          switch (type) {
-            case 10:
-              header.extMax.x = value;
               break;
+            }
 
-            case 20:
-              header.extMax.y = value;
-              break;
+          case 'measurement':
+          case 'insUnits':
+            {
+              switch (type) {
+                case 70:
+                  {
+                    header[state] = value;
+                    state = undefined;
+                    break;
+                  }
+              }
 
-            case 30:
-              header.extMax.z = value;
-              state = undefined;
               break;
-          }
+            }
         }
 
     }
@@ -1709,7 +1861,7 @@ var _default = function _default(tuples) {
 };
 
 exports["default"] = _default;
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1872,7 +2024,7 @@ var _default = function _default(tuples) {
 };
 
 exports["default"] = _default;
-},{"../util/logger":35}],25:[function(require,module,exports){
+},{"../util/logger":36}],26:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1952,7 +2104,7 @@ var _colors = _interopRequireDefault(require("./util/colors"));
 var _Helper = _interopRequireDefault(require("./Helper"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-},{"./Helper":1,"./config":3,"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":26,"./toPolylines":27,"./toSVG":28,"./toSVGPaths":29,"./util/colors":32}],26:[function(require,module,exports){
+},{"./Helper":1,"./config":3,"./denormalise":4,"./groupEntitiesByLayer":7,"./parseString":27,"./toPolylines":28,"./toSVG":29,"./toSVGPaths":30,"./util/colors":33}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1968,7 +2120,15 @@ var _blocks = _interopRequireDefault(require("./handlers/blocks"));
 
 var _entities = _interopRequireDefault(require("./handlers/entities"));
 
+var _logger = _interopRequireDefault(require("./util/logger"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 // Parse the value into the native representation
 var parseValue = function parseValue(type, value) {
@@ -1988,12 +2148,12 @@ var convertToTypesAndValues = function convertToTypesAndValues(contentLines) {
   var state = 'type';
   var type;
   var typesAndValues = [];
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+
+  var _iterator = _createForOfIteratorHelper(contentLines),
+      _step;
 
   try {
-    for (var _iterator = contentLines[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
       var line = _step.value;
 
       if (state === 'type') {
@@ -2005,18 +2165,9 @@ var convertToTypesAndValues = function convertToTypesAndValues(contentLines) {
       }
     }
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _iterator.e(err);
   } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-        _iterator["return"]();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
+    _iterator.f();
   }
 
   return typesAndValues;
@@ -2062,6 +2213,8 @@ var reduceSection = function reduceSection(acc, section) {
       break;
 
     default:
+      _logger["default"].warn("Unsupported section: ".concat(sectionType));
+
   }
 
   return acc;
@@ -2085,7 +2238,7 @@ var _default = function _default(string) {
 };
 
 exports["default"] = _default;
-},{"./handlers/blocks":8,"./handlers/entities":9,"./handlers/header":23,"./handlers/tables":24}],27:[function(require,module,exports){
+},{"./handlers/blocks":8,"./handlers/entities":9,"./handlers/header":24,"./handlers/tables":25,"./util/logger":36}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2149,8 +2302,10 @@ var _default = function _default(parsed) {
 };
 
 exports["default"] = _default;
-},{"./applyTransforms":2,"./denormalise":4,"./entityToPolyline":5,"./util/colors":32,"./util/logger":35,"vecks":51}],28:[function(require,module,exports){
+},{"./applyTransforms":2,"./denormalise":4,"./entityToPolyline":5,"./util/colors":33,"./util/logger":36,"vecks":52}],29:[function(require,module,exports){
 "use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -2177,15 +2332,21 @@ var _toPiecewiseBezier = _interopRequireWildcard(require("./util/toPiecewiseBezi
 
 var _transformBoundingBoxAndElement = _interopRequireDefault(require("./util/transformBoundingBoxAndElement"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -2546,7 +2707,7 @@ var _default = function _default(parsed) {
 };
 
 exports["default"] = _default;
-},{"./denormalise":4,"./entityToPolyline":5,"./getRGBForEntity":6,"./util/logger":35,"./util/rgbToColorAttribute":36,"./util/rotate":37,"./util/toPiecewiseBezier":38,"./util/transformBoundingBoxAndElement":39,"pretty-data":41,"vecks":51}],29:[function(require,module,exports){
+},{"./denormalise":4,"./entityToPolyline":5,"./getRGBForEntity":6,"./util/logger":36,"./util/rgbToColorAttribute":37,"./util/rotate":38,"./util/toPiecewiseBezier":39,"./util/transformBoundingBoxAndElement":40,"pretty-data":42,"vecks":52}],30:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2716,7 +2877,7 @@ var _default = function _default(parsed) {
 };
 
 exports["default"] = _default;
-},{"./denormalise":4,"./entityToPolyline":5,"./getRGBForEntity":6,"./transformVertices":30,"./util/logger":35,"./util/rgbToColorAttribute":36,"pretty-data":41,"vecks":51}],30:[function(require,module,exports){
+},{"./denormalise":4,"./entityToPolyline":5,"./getRGBForEntity":6,"./transformVertices":31,"./util/logger":36,"./util/rgbToColorAttribute":37,"pretty-data":42,"vecks":52}],31:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2724,11 +2885,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports["default"] = void 0;
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -2785,7 +2950,7 @@ var _default = function _default(vertices, transforms) {
 };
 
 exports["default"] = _default;
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2890,7 +3055,7 @@ var _default = function _default(t, degree, points, knots, weights) {
 };
 
 exports["default"] = _default;
-},{"round10":42}],32:[function(require,module,exports){
+},{"round10":43}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2899,7 +3064,7 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = void 0;
 var _default = [[0, 0, 0], [255, 0, 0], [255, 255, 0], [0, 255, 0], [0, 255, 255], [0, 0, 255], [255, 0, 255], [255, 255, 255], [65, 65, 65], [128, 128, 128], [255, 0, 0], [255, 170, 170], [189, 0, 0], [189, 126, 126], [129, 0, 0], [129, 86, 86], [104, 0, 0], [104, 69, 69], [79, 0, 0], [79, 53, 53], [255, 63, 0], [255, 191, 170], [189, 46, 0], [189, 141, 126], [129, 31, 0], [129, 96, 86], [104, 25, 0], [104, 78, 69], [79, 19, 0], [79, 59, 53], [255, 127, 0], [255, 212, 170], [189, 94, 0], [189, 157, 126], [129, 64, 0], [129, 107, 86], [104, 52, 0], [104, 86, 69], [79, 39, 0], [79, 66, 53], [255, 191, 0], [255, 234, 170], [189, 141, 0], [189, 173, 126], [129, 96, 0], [129, 118, 86], [104, 78, 0], [104, 95, 69], [79, 59, 0], [79, 73, 53], [255, 255, 0], [255, 255, 170], [189, 189, 0], [189, 189, 126], [129, 129, 0], [129, 129, 86], [104, 104, 0], [104, 104, 69], [79, 79, 0], [79, 79, 53], [191, 255, 0], [234, 255, 170], [141, 189, 0], [173, 189, 126], [96, 129, 0], [118, 129, 86], [78, 104, 0], [95, 104, 69], [59, 79, 0], [73, 79, 53], [127, 255, 0], [212, 255, 170], [94, 189, 0], [157, 189, 126], [64, 129, 0], [107, 129, 86], [52, 104, 0], [86, 104, 69], [39, 79, 0], [66, 79, 53], [63, 255, 0], [191, 255, 170], [46, 189, 0], [141, 189, 126], [31, 129, 0], [96, 129, 86], [25, 104, 0], [78, 104, 69], [19, 79, 0], [59, 79, 53], [0, 255, 0], [170, 255, 170], [0, 189, 0], [126, 189, 126], [0, 129, 0], [86, 129, 86], [0, 104, 0], [69, 104, 69], [0, 79, 0], [53, 79, 53], [0, 255, 63], [170, 255, 191], [0, 189, 46], [126, 189, 141], [0, 129, 31], [86, 129, 96], [0, 104, 25], [69, 104, 78], [0, 79, 19], [53, 79, 59], [0, 255, 127], [170, 255, 212], [0, 189, 94], [126, 189, 157], [0, 129, 64], [86, 129, 107], [0, 104, 52], [69, 104, 86], [0, 79, 39], [53, 79, 66], [0, 255, 191], [170, 255, 234], [0, 189, 141], [126, 189, 173], [0, 129, 96], [86, 129, 118], [0, 104, 78], [69, 104, 95], [0, 79, 59], [53, 79, 73], [0, 255, 255], [170, 255, 255], [0, 189, 189], [126, 189, 189], [0, 129, 129], [86, 129, 129], [0, 104, 104], [69, 104, 104], [0, 79, 79], [53, 79, 79], [0, 191, 255], [170, 234, 255], [0, 141, 189], [126, 173, 189], [0, 96, 129], [86, 118, 129], [0, 78, 104], [69, 95, 104], [0, 59, 79], [53, 73, 79], [0, 127, 255], [170, 212, 255], [0, 94, 189], [126, 157, 189], [0, 64, 129], [86, 107, 129], [0, 52, 104], [69, 86, 104], [0, 39, 79], [53, 66, 79], [0, 63, 255], [170, 191, 255], [0, 46, 189], [126, 141, 189], [0, 31, 129], [86, 96, 129], [0, 25, 104], [69, 78, 104], [0, 19, 79], [53, 59, 79], [0, 0, 255], [170, 170, 255], [0, 0, 189], [126, 126, 189], [0, 0, 129], [86, 86, 129], [0, 0, 104], [69, 69, 104], [0, 0, 79], [53, 53, 79], [63, 0, 255], [191, 170, 255], [46, 0, 189], [141, 126, 189], [31, 0, 129], [96, 86, 129], [25, 0, 104], [78, 69, 104], [19, 0, 79], [59, 53, 79], [127, 0, 255], [212, 170, 255], [94, 0, 189], [157, 126, 189], [64, 0, 129], [107, 86, 129], [52, 0, 104], [86, 69, 104], [39, 0, 79], [66, 53, 79], [191, 0, 255], [234, 170, 255], [141, 0, 189], [173, 126, 189], [96, 0, 129], [118, 86, 129], [78, 0, 104], [95, 69, 104], [59, 0, 79], [73, 53, 79], [255, 0, 255], [255, 170, 255], [189, 0, 189], [189, 126, 189], [129, 0, 129], [129, 86, 129], [104, 0, 104], [104, 69, 104], [79, 0, 79], [79, 53, 79], [255, 0, 191], [255, 170, 234], [189, 0, 141], [189, 126, 173], [129, 0, 96], [129, 86, 118], [104, 0, 78], [104, 69, 95], [79, 0, 59], [79, 53, 73], [255, 0, 127], [255, 170, 212], [189, 0, 94], [189, 126, 157], [129, 0, 64], [129, 86, 107], [104, 0, 52], [104, 69, 86], [79, 0, 39], [79, 53, 66], [255, 0, 63], [255, 170, 191], [189, 0, 46], [189, 126, 141], [129, 0, 31], [129, 86, 96], [104, 0, 25], [104, 69, 78], [79, 0, 19], [79, 53, 59], [51, 51, 51], [80, 80, 80], [105, 105, 105], [130, 130, 130], [190, 190, 190], [255, 255, 255]];
 exports["default"] = _default;
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2985,7 +3150,7 @@ var _default = function _default(from, to, bulge, resolution) {
 };
 
 exports["default"] = _default;
-},{"vecks":51}],34:[function(require,module,exports){
+},{"vecks":52}],35:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3065,7 +3230,7 @@ var _default = function _default(k, controlPoints, knots, newKnot) {
 };
 
 exports["default"] = _default;
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3099,7 +3264,7 @@ var _default = {
   error: error
 };
 exports["default"] = _default;
-},{"../config":3}],36:[function(require,module,exports){
+},{"../config":3}],37:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3120,7 +3285,7 @@ var _default = function _default(rgb) {
 };
 
 exports["default"] = _default;
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3142,7 +3307,7 @@ var _default = function _default(p, angle) {
 };
 
 exports["default"] = _default;
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3233,7 +3398,7 @@ var _default = function _default(k, controlPoints, knots) {
 };
 
 exports["default"] = _default;
-},{"./insertKnot":34}],39:[function(require,module,exports){
+},{"./insertKnot":35}],40:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3243,11 +3408,15 @@ exports["default"] = void 0;
 
 var _vecks = require("vecks");
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -3348,7 +3517,7 @@ var _default = function _default(bbox, element, transforms) {
 };
 
 exports["default"] = _default;
-},{"vecks":51}],40:[function(require,module,exports){
+},{"vecks":52}],41:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -3364,7 +3533,7 @@ exports["default"] = _default;
   var undefined;
 
   /** Used as the semantic version number. */
-  var VERSION = '4.17.14';
+  var VERSION = '4.17.19';
 
   /** Used as the size to enable large array optimizations. */
   var LARGE_ARRAY_SIZE = 200;
@@ -7071,8 +7240,21 @@ exports["default"] = _default;
      * @returns {Array} Returns the new sorted array.
      */
     function baseOrderBy(collection, iteratees, orders) {
+      if (iteratees.length) {
+        iteratees = arrayMap(iteratees, function(iteratee) {
+          if (isArray(iteratee)) {
+            return function(value) {
+              return baseGet(value, iteratee.length === 1 ? iteratee[0] : iteratee);
+            }
+          }
+          return iteratee;
+        });
+      } else {
+        iteratees = [identity];
+      }
+
       var index = -1;
-      iteratees = arrayMap(iteratees.length ? iteratees : [identity], baseUnary(getIteratee()));
+      iteratees = arrayMap(iteratees, baseUnary(getIteratee()));
 
       var result = baseMap(collection, function(value, key, collection) {
         var criteria = arrayMap(iteratees, function(iteratee) {
@@ -7329,6 +7511,10 @@ exports["default"] = _default;
         var key = toKey(path[index]),
             newValue = value;
 
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+          return object;
+        }
+
         if (index != lastIndex) {
           var objValue = nested[key];
           newValue = customizer ? customizer(objValue, key, nested) : undefined;
@@ -7481,11 +7667,14 @@ exports["default"] = _default;
      *  into `array`.
      */
     function baseSortedIndexBy(array, value, iteratee, retHighest) {
-      value = iteratee(value);
-
       var low = 0,
-          high = array == null ? 0 : array.length,
-          valIsNaN = value !== value,
+          high = array == null ? 0 : array.length;
+      if (high === 0) {
+        return 0;
+      }
+
+      value = iteratee(value);
+      var valIsNaN = value !== value,
           valIsNull = value === null,
           valIsSymbol = isSymbol(value),
           valIsUndefined = value === undefined;
@@ -8970,10 +9159,11 @@ exports["default"] = _default;
       if (arrLength != othLength && !(isPartial && othLength > arrLength)) {
         return false;
       }
-      // Assume cyclic values are equal.
-      var stacked = stack.get(array);
-      if (stacked && stack.get(other)) {
-        return stacked == other;
+      // Check that cyclic values are equal.
+      var arrStacked = stack.get(array);
+      var othStacked = stack.get(other);
+      if (arrStacked && othStacked) {
+        return arrStacked == other && othStacked == array;
       }
       var index = -1,
           result = true,
@@ -9135,10 +9325,11 @@ exports["default"] = _default;
           return false;
         }
       }
-      // Assume cyclic values are equal.
-      var stacked = stack.get(object);
-      if (stacked && stack.get(other)) {
-        return stacked == other;
+      // Check that cyclic values are equal.
+      var objStacked = stack.get(object);
+      var othStacked = stack.get(other);
+      if (objStacked && othStacked) {
+        return objStacked == other && othStacked == object;
       }
       var result = true;
       stack.set(object, other);
@@ -12519,6 +12710,10 @@ exports["default"] = _default;
      * // The `_.property` iteratee shorthand.
      * _.filter(users, 'active');
      * // => objects for ['barney']
+     *
+     * // Combining several predicates using `_.overEvery` or `_.overSome`.
+     * _.filter(users, _.overSome([{ 'age': 36 }, ['age', 40]]));
+     * // => objects for ['fred', 'barney']
      */
     function filter(collection, predicate) {
       var func = isArray(collection) ? arrayFilter : baseFilter;
@@ -13268,15 +13463,15 @@ exports["default"] = _default;
      * var users = [
      *   { 'user': 'fred',   'age': 48 },
      *   { 'user': 'barney', 'age': 36 },
-     *   { 'user': 'fred',   'age': 40 },
+     *   { 'user': 'fred',   'age': 30 },
      *   { 'user': 'barney', 'age': 34 }
      * ];
      *
      * _.sortBy(users, [function(o) { return o.user; }]);
-     * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 40]]
+     * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 30]]
      *
      * _.sortBy(users, ['user', 'age']);
-     * // => objects for [['barney', 34], ['barney', 36], ['fred', 40], ['fred', 48]]
+     * // => objects for [['barney', 34], ['barney', 36], ['fred', 30], ['fred', 48]]
      */
     var sortBy = baseRest(function(collection, iteratees) {
       if (collection == null) {
@@ -18151,11 +18346,11 @@ exports["default"] = _default;
 
       // Use a sourceURL for easier debugging.
       // The sourceURL gets injected into the source that's eval-ed, so be careful
-      // with lookup (in case of e.g. prototype pollution), and strip newlines if any.
-      // A newline wouldn't be a valid sourceURL anyway, and it'd enable code injection.
+      // to normalize all kinds of whitespace, so e.g. newlines (and unicode versions of it) can't sneak in
+      // and escape the comment, thus injecting code that gets evaled.
       var sourceURL = '//# sourceURL=' +
         (hasOwnProperty.call(options, 'sourceURL')
-          ? (options.sourceURL + '').replace(/[\r\n]/g, ' ')
+          ? (options.sourceURL + '').replace(/\s/g, ' ')
           : ('lodash.templateSources[' + (++templateCounter) + ']')
         ) + '\n';
 
@@ -18188,8 +18383,6 @@ exports["default"] = _default;
 
       // If `variable` is not specified wrap a with-statement around the generated
       // code to add the data object to the top of the scope chain.
-      // Like with sourceURL, we take care to not check the option's prototype,
-      // as this configuration is a code injection vector.
       var variable = hasOwnProperty.call(options, 'variable') && options.variable;
       if (!variable) {
         source = 'with (obj) {\n' + source + '\n}\n';
@@ -18896,6 +19089,9 @@ exports["default"] = _default;
      * values against any array or object value, respectively. See `_.isEqual`
      * for a list of supported value comparisons.
      *
+     * **Note:** Multiple values can be checked by combining several matchers
+     * using `_.overSome`
+     *
      * @static
      * @memberOf _
      * @since 3.0.0
@@ -18911,6 +19107,10 @@ exports["default"] = _default;
      *
      * _.filter(objects, _.matches({ 'a': 4, 'c': 6 }));
      * // => [{ 'a': 4, 'b': 5, 'c': 6 }]
+     *
+     * // Checking for several possible values
+     * _.filter(users, _.overSome([_.matches({ 'a': 1 }), _.matches({ 'a': 4 })]));
+     * // => [{ 'a': 1, 'b': 2, 'c': 3 }, { 'a': 4, 'b': 5, 'c': 6 }]
      */
     function matches(source) {
       return baseMatches(baseClone(source, CLONE_DEEP_FLAG));
@@ -18924,6 +19124,9 @@ exports["default"] = _default;
      * **Note:** Partial comparisons will match empty array and empty object
      * `srcValue` values against any array or object value, respectively. See
      * `_.isEqual` for a list of supported value comparisons.
+     *
+     * **Note:** Multiple values can be checked by combining several matchers
+     * using `_.overSome`
      *
      * @static
      * @memberOf _
@@ -18941,6 +19144,10 @@ exports["default"] = _default;
      *
      * _.find(objects, _.matchesProperty('a', 4));
      * // => { 'a': 4, 'b': 5, 'c': 6 }
+     *
+     * // Checking for several possible values
+     * _.filter(users, _.overSome([_.matchesProperty('a', 1), _.matchesProperty('a', 4)]));
+     * // => [{ 'a': 1, 'b': 2, 'c': 3 }, { 'a': 4, 'b': 5, 'c': 6 }]
      */
     function matchesProperty(path, srcValue) {
       return baseMatchesProperty(path, baseClone(srcValue, CLONE_DEEP_FLAG));
@@ -19164,6 +19371,10 @@ exports["default"] = _default;
      * Creates a function that checks if **all** of the `predicates` return
      * truthy when invoked with the arguments it receives.
      *
+     * Following shorthands are possible for providing predicates.
+     * Pass an `Object` and it will be used as an parameter for `_.matches` to create the predicate.
+     * Pass an `Array` of parameters for `_.matchesProperty` and the predicate will be created using them.
+     *
      * @static
      * @memberOf _
      * @since 4.0.0
@@ -19190,6 +19401,10 @@ exports["default"] = _default;
      * Creates a function that checks if **any** of the `predicates` return
      * truthy when invoked with the arguments it receives.
      *
+     * Following shorthands are possible for providing predicates.
+     * Pass an `Object` and it will be used as an parameter for `_.matches` to create the predicate.
+     * Pass an `Array` of parameters for `_.matchesProperty` and the predicate will be created using them.
+     *
      * @static
      * @memberOf _
      * @since 4.0.0
@@ -19209,6 +19424,9 @@ exports["default"] = _default;
      *
      * func(NaN);
      * // => false
+     *
+     * var matchesFunc = _.overSome([{ 'a': 1 }, { 'a': 2 }])
+     * var matchesPropertyFunc = _.overSome([['a', 1], ['a', 2]])
      */
     var overSome = createOver(arraySome);
 
@@ -20464,7 +20682,7 @@ exports["default"] = _default;
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
 * pretty-data - nodejs plugin to pretty-print or minify data in XML, JSON and CSS formats.
 *  
@@ -20810,7 +21028,7 @@ exports.pd= new pp;
 
 
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Decimal adjustment of a number.
  *
@@ -20865,7 +21083,7 @@ module.exports.polyfill = function() {
     }
 };
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -20877,7 +21095,7 @@ var _V = _interopRequireDefault(require("./V2"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -20885,9 +21103,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var Box2 =
-/*#__PURE__*/
-function () {
+var Box2 = /*#__PURE__*/function () {
   function Box2(min, max) {
     _classCallCheck(this, Box2);
 
@@ -20965,7 +21181,7 @@ Box2.fromPoints = function (points) {
 
 var _default = Box2;
 exports["default"] = _default;
-},{"./V2":49}],44:[function(require,module,exports){
+},{"./V2":50}],45:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -20977,7 +21193,7 @@ var _V = _interopRequireDefault(require("./V3"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -20985,9 +21201,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var Box3 =
-/*#__PURE__*/
-function () {
+var Box3 = /*#__PURE__*/function () {
   function Box3(min, max) {
     _classCallCheck(this, Box3);
 
@@ -21074,7 +21288,7 @@ Box3.fromPoints = function (points) {
 
 var _default = Box3;
 exports["default"] = _default;
-},{"./V3":50}],45:[function(require,module,exports){
+},{"./V3":51}],46:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21086,7 +21300,7 @@ var _V = _interopRequireDefault(require("./V2"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -21144,9 +21358,7 @@ var dist = function dist(a, b) {
   return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 };
 
-var Line2 =
-/*#__PURE__*/
-function () {
+var Line2 = /*#__PURE__*/function () {
   function Line2(a, b) {
     _classCallCheck(this, Line2);
 
@@ -21198,7 +21410,7 @@ function () {
 
 var _default = Line2;
 exports["default"] = _default;
-},{"./V2":49}],46:[function(require,module,exports){
+},{"./V2":50}],47:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21210,7 +21422,7 @@ var _V = _interopRequireDefault(require("./V3"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -21222,9 +21434,7 @@ var dist = function dist(a, b) {
   return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2) + Math.pow(a.z - b.z, 2));
 };
 
-var Line3 =
-/*#__PURE__*/
-function () {
+var Line3 = /*#__PURE__*/function () {
   function Line3(a, b) {
     _classCallCheck(this, Line3);
 
@@ -21258,7 +21468,7 @@ function () {
 
 var _default = Line3;
 exports["default"] = _default;
-},{"./V3":50}],47:[function(require,module,exports){
+},{"./V3":51}],48:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21272,9 +21482,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var Plane3 =
-/*#__PURE__*/
-function () {
+var Plane3 = /*#__PURE__*/function () {
   function Plane3(a, b, c, d) {
     _classCallCheck(this, Plane3);
 
@@ -21349,7 +21557,7 @@ Plane3.fromPoints = function (points) {
 
 var _default = Plane3;
 exports["default"] = _default;
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21369,9 +21577,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 // Quaternion implementation heavily adapted from the Quaternion implementation in THREE.js
 // https://github.com/mrdoob/three.js/blob/master/src/math/Quaternion.js
-var Quaternion =
-/*#__PURE__*/
-function () {
+var Quaternion = /*#__PURE__*/function () {
   function Quaternion(x, y, z, w) {
     _classCallCheck(this, Quaternion);
 
@@ -21414,7 +21620,7 @@ Quaternion.fromAxisAngle = function (axis, angle) {
 
 var _default = Quaternion;
 exports["default"] = _default;
-},{"./V3":50}],49:[function(require,module,exports){
+},{"./V3":51}],50:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21422,7 +21628,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports["default"] = void 0;
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -21430,9 +21636,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var V2 =
-/*#__PURE__*/
-function () {
+var V2 = /*#__PURE__*/function () {
   function V2(x, y) {
     _classCallCheck(this, V2);
 
@@ -21492,7 +21696,7 @@ function () {
 
 var _default = V2;
 exports["default"] = _default;
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21500,7 +21704,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports["default"] = void 0;
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -21508,9 +21712,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var V3 =
-/*#__PURE__*/
-function () {
+var V3 = /*#__PURE__*/function () {
   function V3(x, y, z) {
     _classCallCheck(this, V3);
 
@@ -21585,7 +21787,7 @@ function () {
 
 var _default = V3;
 exports["default"] = _default;
-},{}],51:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21657,5 +21859,5 @@ var _Line = _interopRequireDefault(require("./Line2"));
 var _Line2 = _interopRequireDefault(require("./Line3"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-},{"./Box2":43,"./Box3":44,"./Line2":45,"./Line3":46,"./Plane3":47,"./Quaternion":48,"./V2":49,"./V3":50}]},{},[25])(25)
+},{"./Box2":44,"./Box3":45,"./Line2":46,"./Line3":47,"./Plane3":48,"./Quaternion":49,"./V2":50,"./V3":51}]},{},[26])(26)
 });
